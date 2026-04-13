@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateReview, getListReviewsQueryKey } from "@workspace/api-client-react";
-import { FileSearch, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { FileSearch, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp, Upload, X, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,11 +68,41 @@ function ClauseCard({ clause }: { clause: RiskyClause }) {
   );
 }
 
+async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).href;
+
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item: any) => ("str" in item ? item.str : ""))
+      .join(" ");
+    pages.push(pageText);
+  }
+  return pages.join("\n\n");
+}
+
+async function extractTextFromDocx(arrayBuffer: ArrayBuffer): Promise<string> {
+  const mammoth = await import("mammoth");
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+}
+
 export default function ReviewPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [contractText, setContractText] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [result, setResult] = useState<{
     id: number;
     riskScore: number;
@@ -97,6 +127,71 @@ export default function ReviewPage() {
     },
   });
 
+  const processFile = async (file: File) => {
+    const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
+    const isDocx =
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      file.name.endsWith(".docx");
+
+    if (!isPdf && !isDocx) {
+      toast({ title: "Only PDF and DOCX files are supported.", variant: "destructive" });
+      return;
+    }
+
+    setUploadedFile(file);
+    setIsExtracting(true);
+    setContractText("");
+
+    if (!title) {
+      setTitle(file.name.replace(/\.(pdf|docx)$/i, ""));
+    }
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const text = isPdf
+        ? await extractTextFromPdf(arrayBuffer)
+        : await extractTextFromDocx(arrayBuffer);
+
+      if (!text.trim()) {
+        toast({ title: "Could not extract text from this file. Try pasting the text manually.", variant: "destructive" });
+        setUploadedFile(null);
+      } else {
+        setContractText(text.trim());
+        toast({ title: "File extracted successfully." });
+      }
+    } catch {
+      toast({ title: "Failed to read file. Please try again or paste text manually.", variant: "destructive" });
+      setUploadedFile(null);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
+  const clearFile = () => {
+    setUploadedFile(null);
+    setContractText("");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !contractText) {
@@ -111,14 +206,14 @@ export default function ReviewPage() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-serif font-bold text-white">Review a Contract</h1>
-        <p className="text-muted-foreground mt-1">Paste your contract text and get instant AI-powered risk analysis.</p>
+        <p className="text-muted-foreground mt-1">Upload a PDF or DOCX file, or paste your contract text, and get instant AI-powered risk analysis.</p>
       </div>
 
       {!result ? (
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base font-semibold">Contract Analysis</CardTitle>
-            <CardDescription className="text-muted-foreground">Paste the full contract text below for a comprehensive review.</CardDescription>
+            <CardDescription className="text-muted-foreground">Upload a file or paste the full contract text below for a comprehensive review.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -131,24 +226,88 @@ export default function ReviewPage() {
                   className="bg-background border-border text-white placeholder:text-muted-foreground"
                 />
               </div>
+
               <div className="space-y-2">
-                <Label className="text-white text-sm font-medium">Contract Text *</Label>
+                <Label className="text-white text-sm font-medium">Upload Contract File</Label>
+
+                {uploadedFile ? (
+                  <div className="flex items-center gap-3 p-3 rounded-sm border border-primary/40 bg-primary/5">
+                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">{uploadedFile.name}</p>
+                      <p className="text-xs text-muted-foreground">{(uploadedFile.size / 1024).toFixed(0)} KB</p>
+                    </div>
+                    {isExtracting ? (
+                      <Loader2 className="h-4 w-4 text-primary animate-spin flex-shrink-0" />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={clearFile}
+                        className="text-muted-foreground hover:text-white transition-colors flex-shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className={`relative border-2 border-dashed rounded-sm p-6 text-center transition-colors cursor-pointer ${
+                      isDragging
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50 hover:bg-secondary/20"
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-white font-medium">Drop a file here or click to browse</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF and DOCX supported</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-white text-sm font-medium">Contract Text *</Label>
+                  {contractText && (
+                    <span className="text-xs text-muted-foreground">{contractText.length.toLocaleString()} characters</span>
+                  )}
+                </div>
                 <Textarea
-                  placeholder="Paste the full contract text here..."
+                  placeholder={isExtracting ? "Extracting text from file..." : "Paste the full contract text here, or upload a file above to auto-populate..."}
                   value={contractText}
-                  onChange={(e) => setContractText(e.target.value)}
-                  className="bg-background border-border text-white placeholder:text-muted-foreground min-h-[300px] font-mono text-sm"
+                  onChange={(e) => {
+                    setContractText(e.target.value);
+                    if (uploadedFile && e.target.value !== contractText) setUploadedFile(null);
+                  }}
+                  disabled={isExtracting}
+                  className="bg-background border-border text-white placeholder:text-muted-foreground min-h-[300px] font-mono text-sm disabled:opacity-60"
                 />
               </div>
+
               <Button
                 type="submit"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || isExtracting}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-5 h-auto"
               >
                 {mutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Analyzing contract...
+                  </>
+                ) : isExtracting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Extracting file text...
                   </>
                 ) : (
                   <>
@@ -218,7 +377,7 @@ export default function ReviewPage() {
           )}
 
           <Button
-            onClick={() => { setResult(null); setTitle(""); setContractText(""); }}
+            onClick={() => { setResult(null); setTitle(""); setContractText(""); setUploadedFile(null); }}
             variant="outline"
             className="border-border text-white hover:bg-secondary"
           >
