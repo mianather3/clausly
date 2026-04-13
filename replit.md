@@ -55,4 +55,5 @@ Full-stack AI-powered legal document platform. Users can generate legal document
 - `CLERK_SECRET_KEY` — Clerk server secret (auto-provisioned)
 - `CLERK_PUBLISHABLE_KEY` — Clerk publishable key (auto-provisioned)
 - `VITE_CLERK_PUBLISHABLE_KEY` — Clerk key for frontend (auto-provisioned)
-- `DATABASE_URL` — PostgreSQL connection (auto-provisioned)
+- `NEON_DATABASE_URL` — Neon.tech PostgreSQL connection string (persistent, survives redeployments)
+- `DATABASE_URL` — Replit built-in PostgreSQL (fallback, not used in production)
