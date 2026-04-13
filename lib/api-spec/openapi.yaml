@@ -3,20 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Clausly API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: documents
+    description: Document operations
+  - name: reviews
+    description: Contract review operations
+  - name: dashboard
+    description: Dashboard operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,193 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      summary: List user's generated documents
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createDocument
+      tags: [documents]
+      summary: Generate a legal document using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentBody"
+      responses:
+        "201":
+          description: Created document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+
+  /documents/{id}:
+    get:
+      operationId: getDocument
+      tags: [documents]
+      summary: Get a single document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteDocument
+      tags: [documents]
+      summary: Delete a document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List user's contract reviews
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Analyze a contract using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewBody"
+      responses:
+        "201":
+          description: Created review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+
+  /reviews/{id}:
+    get:
+      operationId: getReview
+      tags: [reviews]
+      summary: Get a single review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteReview
+      tags: [reviews]
+      summary: Delete a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+
+  /dashboard/recent:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent documents and reviews activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentActivity"
+        "401":
+          description: Unauthorized
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +226,140 @@ components:
       required:
         - status
 
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        documentType:
+          type: string
+          enum: [nda, privacy_policy, contractor_agreement, terms_of_service]
+        title:
+          type: string
+        partyA:
+          type: string
+        partyB:
+          type: ["string", "null"]
+        content:
+          type: string
+        metadata:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - documentType
+        - title
+        - partyA
+        - partyB
+        - content
+        - metadata
+        - createdAt
+        - updatedAt
+
+    CreateDocumentBody:
+      type: object
+      properties:
+        documentType:
+          type: string
+          enum: [nda, privacy_policy, contractor_agreement, terms_of_service]
+        partyA:
+          type: string
+        partyB:
+          type: string
+        keyTerms:
+          type: string
+        jurisdiction:
+          type: string
+        additionalContext:
+          type: string
+      required:
+        - documentType
+        - partyA
+        - keyTerms
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        title:
+          type: string
+        contractText:
+          type: string
+        riskScore:
+          type: integer
+        riskyClausesJson:
+          type: ["string", "null"]
+        summaryJson:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - contractText
+        - riskScore
+        - riskyClausesJson
+        - summaryJson
+        - createdAt
+        - updatedAt
+
+    CreateReviewBody:
+      type: object
+      properties:
+        contractText:
+          type: string
+        title:
+          type: string
+      required:
+        - contractText
+        - title
+
+    DashboardStats:
+      type: object
+      properties:
+        totalDocuments:
+          type: integer
+        totalReviews:
+          type: integer
+        documentsByType:
+          type: object
+          additionalProperties:
+            type: integer
+        avgRiskScore:
+          type: ["number", "null"]
+      required:
+        - totalDocuments
+        - totalReviews
+        - documentsByType
+        - avgRiskScore
+
+    RecentActivity:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+      required:
+        - documents
+        - reviews
