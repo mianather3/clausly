@@ -1,0 +1,105 @@
+I need you to make several major improvements to the Clausly application. Please implement all of the following changes:
+
+PART 1: FIX ALL DOCUMENT GENERATION PROMPTS
+Rewrite the AI system prompts for ALL document types (NDA, Terms of Service, Privacy Policy, Independent Contractor Agreement) to produce attorney-quality documents. Apply these rules to every document type:
+GLOBAL RULES FOR ALL DOCUMENTS:
+
+Always use the current year automatically using the server's current date — never hardcode any year
+Always use the actual party names throughout the entire document — never refer to them as 'Party A' or 'Party B' after the opening paragraph. Define a short name in the opening (e.g. 'TechNova') and use it consistently
+Capitalize all defined terms consistently throughout
+Use formal legal drafting style throughout
+Every document must have proper numbered sections and subsections
+
+NDA SPECIFIC — always include these sections in this exact order:
+
+Opening paragraph with full legal names, jurisdiction, and effective date
+RECITALS — define the purpose and define Confidential Information here
+DEFINITIONS — only terms not already defined in Recitals (Disclosing Party, Receiving Party, Permitted Purpose, Representatives)
+OBLIGATIONS OF CONFIDENTIALITY — detailed obligations for each party as Recipient including: maintain strict confidence, limit disclosure to Representatives, notify of unauthorized disclosure, use same degree of care as own confidential information but no less than reasonable care
+EXCLUSIONS FROM CONFIDENTIAL INFORMATION — standalone detailed section covering: publicly available information, prior knowledge, third party disclosure, independent development, legally required disclosure
+OWNERSHIP OF CONFIDENTIAL INFORMATION — standalone section confirming all Confidential Information remains sole property of Disclosing Party
+RETURN OF CONFIDENTIAL INFORMATION — standalone section requiring prompt return or certified destruction of all Confidential Information upon termination or request
+TERM AND TERMINATION — include duration, termination by written notice, and survival of obligations post-termination
+INDEMNIFICATION — breaching party shall indemnify and hold harmless the other party for all losses, damages, costs arising from breach
+REMEDIES — include equitable relief language: breach would cause irreparable harm for which monetary damages are inadequate, disclosing party entitled to seek injunctive relief without posting bond or proving actual damages
+NOTICES — full notices clause stating all notices must be in writing, deemed delivered when: personally delivered, sent by confirmed facsimile, three business days after certified mail, or one business day after overnight courier. Include address blocks for each party with fields for: ATTN, Name, Address, Contact No., Email
+DISPUTE RESOLUTION — governing law, jurisdiction, and dispute resolution mechanism (negotiation first, then arbitration or litigation)
+GENERAL — label this section General not Miscellaneous, include: Amendment, Waiver, Counterparts, Disclaimer of Warranties, Assignment and Binding Effect, Entire Agreement and Modification
+Signature block using actual defined party names, with By/Name/Title/Date for each party
+
+INDEPENDENT CONTRACTOR AGREEMENT SPECIFIC — always include:
+
+Opening with full party names and effective date
+RECITALS
+DEFINITIONS — Services, Work Product, Deliverables, Confidential Information
+SERVICES — detailed description, timeline, milestones if applicable
+COMPENSATION — amount, payment schedule, invoicing requirements, late payment terms
+INDEPENDENT CONTRACTOR STATUS — not an employee, no benefits, own equipment, own taxes, no authority to bind company
+INTELLECTUAL PROPERTY AND WORK PRODUCT OWNERSHIP — all Work Product is work-for-hire, full assignment to company, contractor retains no rights, pre-existing IP carveout (contractor keeps tools and frameworks brought to the project, only new Work Product is assigned)
+CONFIDENTIALITY — same obligations as NDA section above
+NON-SOLICITATION — contractor shall not solicit company's employees or clients during term and for 12 months after (do NOT include a non-compete unless the user specifically requests one — a worldwide 5-year non-compete is unenforceable and one-sided)
+REPRESENTATIONS AND WARRANTIES — contractor has right to enter agreement, work will be original, work will not infringe third party IP
+INDEMNIFICATION — each party indemnifies the other for their own breaches
+LIMITATION OF LIABILITY — mutual cap on liability at total fees paid in preceding 3 months
+TERM AND TERMINATION — duration, termination for cause, termination for convenience with notice period, obligations surviving termination
+DISPUTE RESOLUTION
+NOTICES — same format as NDA
+GENERAL — same as NDA general section
+Signature block
+
+PRIVACY POLICY SPECIFIC — always include:
+
+Effective date (current date) and last updated date
+INTRODUCTION — who we are, what this policy covers, agreement to terms by using the service
+INFORMATION WE COLLECT — Personal Information (name, email, payment info), Usage Data (IP, browser, pages visited, time spent), Cookies and Tracking Technologies (types of cookies used, purpose of each)
+HOW WE USE YOUR INFORMATION — to provide and maintain service, process payments, send transactional emails, improve product, comply with legal obligations, with OpenAI API disclosure if applicable
+LEGAL BASIS FOR PROCESSING (GDPR) — consent, contractual necessity, legitimate interests, legal obligation
+DATA SHARING AND DISCLOSURE — we do not sell data, third party service providers (list categories: payment processors, hosting, analytics), legal requirements, business transfers
+DATA RETENTION — how long data is kept, criteria for determining retention period
+YOUR RIGHTS — access, correction, deletion, portability, objection, withdrawal of consent. Separate subsections for GDPR rights and CCPA rights
+COOKIES — detailed cookie policy, types (necessary, analytics, marketing), how to opt out
+CHILDREN'S PRIVACY — not directed at under 13/18, what happens if we discover we collected minor's data
+SECURITY — technical and organizational measures, no guarantee of absolute security
+THIRD PARTY LINKS — not responsible for third party privacy practices
+CHANGES TO THIS POLICY — how we notify users of changes, continued use constitutes acceptance
+CONTACT US — full contact information block
+
+TERMS OF SERVICE SPECIFIC — always include:
+
+Effective date and acceptance mechanism
+DEFINITIONS — Service, User, Account, Content, Subscription
+ACCEPTANCE OF TERMS — by using the service user agrees to these terms
+ELIGIBILITY — age requirement, authority to bind entity if signing on behalf of company
+ACCOUNT REGISTRATION — accurate information, user responsible for account security, notify of unauthorized access
+SUBSCRIPTION AND PAYMENT — plan tiers, billing cycle, automatic renewal, refund policy, price change notice period
+ACCEPTABLE USE — what users may and may not do, prohibited conduct list
+INTELLECTUAL PROPERTY — company owns all IP in the service, user owns their content, user grants company license to process their content to provide the service
+DISCLAIMER — documents generated are for informational purposes only and do not constitute legal advice, users should consult a licensed attorney for legal advice
+DISCLAIMER OF WARRANTIES — service provided as-is, no warranties of merchantability or fitness for particular purpose
+LIMITATION OF LIABILITY — cap on damages, exclusion of consequential damages
+INDEMNIFICATION — user indemnifies company for misuse
+TERMINATION — company may suspend or terminate for violations, user may cancel anytime, effect of termination on data
+DISPUTE RESOLUTION — governing law, informal resolution first, arbitration clause, class action waiver
+NOTICES — same format as NDA
+GENERAL — same as NDA general section
+Signature or acceptance block
+
+
+PART 2: FIX THE CONTRACT REVIEW FEATURE
+Rewrite the contract review AI system prompt completely. The new prompt should instruct the AI to review contracts exactly as a senior corporate attorney would. Specific instructions:
+
+Only flag clauses that create genuine legal risk — do not flag standard boilerplate, normal definitions, or routine governing law clauses unless they contain specific problems
+For each flagged clause: (1) quote the exact problematic language, (2) explain in plain English specifically why it creates risk and for which party, (3) provide exact replacement language a practicing attorney would use
+Always check for these high-risk issues: unlimited liability exposure, missing liability caps, unenforceable non-competes (flag any non-compete broader than 2 years or not limited to a specific geography or industry), IP assignment that includes pre-existing tools and frameworks, termination without notice or compensation, unilateral modification rights, one-sided dispute resolution, missing indemnification, missing limitation of liability, jury trial waivers, mandatory arbitration with no carveout for injunctive relief
+Always check for these missing protections that should be present but aren't: no limitation of liability cap, no mutual indemnification, no dispute resolution mechanism, no notice requirements, no termination for convenience with notice, no IP ownership clarity
+Risk score should reflect genuine legal risk to the party reviewing the contract — if the contract is mutual and balanced, it should score 2-3. If it is heavily one-sided it should score 7-9. Score 10 only for contracts that are predatory or potentially illegal
+Overall summary should be written in plain English that a non-lawyer can understand, explaining the practical business risk not just legal terminology
+
+
+PART 3: ADD DOCUMENT DOWNLOAD OPTIONS
+For every generated document, replace the current download button with TWO download options:
+Option 1 — Download as Word Document (.docx): When clicked, generates and downloads a properly formatted .docx file. The Word document must have: proper heading styles (Heading 1 for section numbers and titles, Normal for body text), correct font (Times New Roman 12pt for body, 14pt bold for title), proper margins (1 inch all sides), page numbers in footer, document title as the filename. Use the docx npm package to generate the Word file on the backend.
+Option 2 — Download as PDF: Keep existing PDF functionality but ensure it uses the same proper formatting as the Word document.
+The two buttons should sit side by side and be clearly labeled 'Download Word (.docx)' and 'Download PDF'. The Word download should be the primary/more prominent button since that is the standard format legal professionals use.
+
+Please implement all three parts completely. Start with Part 3 (downloads) first, then Part 1 (document prompts), then Part 2 (contract review).
