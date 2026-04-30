@@ -25,6 +25,7 @@ export default function DocumentDetailPage({ id }: { id: string }) {
   const { getToken } = useAuth();
   const [copied, setCopied] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const docId = parseInt(id, 10);
   const { data: doc, isLoading, error } = useGetDocument(docId, {
     query: { enabled: !!docId && !isNaN(docId) },
@@ -44,8 +45,6 @@ export default function DocumentDetailPage({ id }: { id: string }) {
     setDownloadingDocx(true);
     try {
       const token = await getToken();
-      console.log("[docx] token present:", !!token, "len:", token?.length);
-      console.log("[docx] doc.title:", doc.title, "content length:", doc.content?.length);
       const response = await fetch(`/api/documents/download-docx`, {
         method: "POST",
         headers: {
@@ -54,11 +53,6 @@ export default function DocumentDetailPage({ id }: { id: string }) {
         },
         body: JSON.stringify({ title: doc.title, content: doc.content }),
       });
-      console.log("[docx] Status:", response.status);
-      console.log("[docx] Content-Type:", response.headers.get("content-type"));
-      const responseClone = response.clone();
-      const text = await responseClone.text();
-      console.log("[docx] Response preview:", text.slice(0, 200));
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
@@ -88,36 +82,46 @@ export default function DocumentDetailPage({ id }: { id: string }) {
     }
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!doc) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast({ title: "Please allow popups to download PDF.", variant: "destructive" });
-      return;
+    setDownloadingPdf(true);
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/documents/download-pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: doc.title, content: doc.content }),
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
+      }
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("pdf")) {
+        throw new Error(`Expected PDF but got ${contentType}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${doc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_") || "document"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "PDF downloaded." });
+    } catch (err) {
+      toast({
+        title: "Failed to download PDF.",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingPdf(false);
     }
-    const escaped = doc.content
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>${doc.title}</title>
-  <style>
-    @page { margin: 1in; }
-    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.6; color: #1a1a1a; max-width: 100%; }
-    h1.doc-title { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 24pt; }
-    pre { white-space: pre-wrap; word-wrap: break-word; font-family: "Times New Roman", Times, serif; font-size: 12pt; }
-  </style>
-</head>
-<body>
-  <h1 class="doc-title">${doc.title}</h1>
-  <pre>${escaped}</pre>
-  <script>window.onload = function() { window.print(); };<\/script>
-</body>
-</html>`);
-    printWindow.document.close();
-    toast({ title: "PDF print dialog opened." });
   };
 
   if (isLoading) {
@@ -199,12 +203,13 @@ export default function DocumentDetailPage({ id }: { id: string }) {
 
             <Button
               onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
               variant="outline"
               size="sm"
               className="border-border text-white hover:bg-secondary gap-2"
             >
-              <Download className="h-4 w-4" />
-              Download PDF
+              {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {downloadingPdf ? "Generating..." : "Download PDF"}
             </Button>
           </div>
         </CardHeader>

@@ -15,6 +15,11 @@ import {
   Footer,
   convertInchesToTwip,
 } from "docx";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+
+function stripMarkdownBold(s: string): string {
+  return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1");
+}
 
 const router: IRouter = Router();
 
@@ -232,68 +237,94 @@ function buildDocxFromText(title: string, content: string): Document {
   const lines = content.split("\n");
   const children: Paragraph[] = [];
 
+  // Title — Heading 1, large, centered, bold
   children.push(
     new Paragraph({
-      text: title,
-      heading: HeadingLevel.TITLE,
+      heading: HeadingLevel.HEADING_1,
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
-      run: {
-        font: "Times New Roman",
-        size: 28,
-        bold: true,
-      },
+      children: [
+        new TextRun({
+          text: stripMarkdownBold(title),
+          font: "Times New Roman",
+          size: 32, // 16pt
+          bold: true,
+        }),
+      ],
     })
   );
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) {
+  for (const rawLine of lines) {
+    const line = stripMarkdownBold(rawLine.trim());
+    if (!line) {
       children.push(new Paragraph({ text: "", spacing: { after: 100 } }));
       continue;
     }
 
-    const isNumberedSection = /^\d+\.\s+[A-Z]/.test(trimmed);
-    const isAllCaps = trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed);
-    const isSubSection = /^\d+\.\d+/.test(trimmed);
+    // Subsection FIRST (e.g. "2.1 ...", "5.1.3 ...") — must precede numbered-section check
+    const isSubSection = /^\d+\.\d+/.test(line);
+    // Numbered top-level section: "1. RECITALS" or "1. Definitions"
+    const isNumberedSection = !isSubSection && /^\d+\.\s+\S/.test(line);
+    // ALL-CAPS heading without a number (e.g. "RECITALS", "GENERAL")
+    const isAllCapsHeading =
+      !isSubSection &&
+      !isNumberedSection &&
+      line.length > 2 &&
+      line.length < 80 &&
+      line === line.toUpperCase() &&
+      /[A-Z]/.test(line) &&
+      !/[.;:](\s|$)/.test(line); // not a sentence
 
-    if (isNumberedSection || isAllCaps) {
+    if (isNumberedSection || isAllCapsHeading) {
+      // Heading 2 — section titles like "1. RECITALS"
       children.push(
         new Paragraph({
-          text: trimmed,
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 300, after: 120 },
-          run: {
-            font: "Times New Roman",
-            size: 24,
-            bold: true,
-          },
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 280, after: 140 },
+          children: [
+            new TextRun({
+              text: line,
+              font: "Times New Roman",
+              size: 26, // 13pt
+              bold: true,
+            }),
+          ],
         })
       );
     } else if (isSubSection) {
-      children.push(
-        new Paragraph({
-          text: trimmed,
-          heading: HeadingLevel.HEADING_2,
-          spacing: { before: 160, after: 80 },
-          run: {
-            font: "Times New Roman",
-            size: 22,
-            bold: false,
-          },
-        })
-      );
+      // Subsection (e.g. "2.1 ...") — normal paragraph with bold subsection number prefix
+      const match = line.match(/^(\d+(?:\.\d+)+\.?)(\s+)(.*)$/);
+      if (match) {
+        const [, prefix, , rest] = match;
+        children.push(
+          new Paragraph({
+            spacing: { before: 120, after: 120 },
+            children: [
+              new TextRun({ text: `${prefix} `, font: "Times New Roman", size: 24, bold: true }),
+              new TextRun({ text: rest, font: "Times New Roman", size: 24 }),
+            ],
+          })
+        );
+      } else {
+        children.push(
+          new Paragraph({
+            spacing: { before: 120, after: 120 },
+            children: [new TextRun({ text: line, font: "Times New Roman", size: 24, bold: true })],
+          })
+        );
+      }
     } else {
+      // Body — normal Times New Roman 12pt
       children.push(
         new Paragraph({
+          spacing: { after: 120, line: 300 },
           children: [
             new TextRun({
-              text: trimmed,
+              text: line,
               font: "Times New Roman",
-              size: 24,
+              size: 24, // 12pt
             }),
           ],
-          spacing: { after: 120 },
         })
       );
     }
@@ -332,6 +363,235 @@ function buildDocxFromText(title: string, content: string): Document {
       },
     ],
   });
+}
+
+// ─── PDF generation (server-side, pdf-lib) ────────────────────────────────────
+
+type PdfLineKind = "title" | "section" | "subsection" | "body" | "blank";
+
+interface PdfLine {
+  kind: PdfLineKind;
+  text: string;
+  boldPrefix?: string; // for subsections, the "2.1" part rendered bold
+}
+
+function classifyLines(title: string, content: string): PdfLine[] {
+  const out: PdfLine[] = [];
+  out.push({ kind: "title", text: stripMarkdownBold(title) });
+
+  for (const rawLine of content.split("\n")) {
+    const line = stripMarkdownBold(rawLine.trim());
+    if (!line) {
+      out.push({ kind: "blank", text: "" });
+      continue;
+    }
+    const isSubSection = /^\d+\.\d+/.test(line);
+    const isNumberedSection = !isSubSection && /^\d+\.\s+\S/.test(line);
+    const isAllCapsHeading =
+      !isSubSection &&
+      !isNumberedSection &&
+      line.length > 2 &&
+      line.length < 80 &&
+      line === line.toUpperCase() &&
+      /[A-Z]/.test(line) &&
+      !/[.;:](\s|$)/.test(line);
+
+    if (isNumberedSection || isAllCapsHeading) {
+      out.push({ kind: "section", text: line });
+    } else if (isSubSection) {
+      const m = line.match(/^(\d+(?:\.\d+)+\.?)(\s+)(.*)$/);
+      if (m) out.push({ kind: "subsection", text: m[3], boldPrefix: m[1] });
+      else out.push({ kind: "subsection", text: line });
+    } else {
+      out.push({ kind: "body", text: line });
+    }
+  }
+  return out;
+}
+
+function wrapText(
+  text: string,
+  font: import("pdf-lib").PDFFont,
+  size: number,
+  maxWidth: number
+): string[] {
+  if (!text) return [""];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    const w = font.widthOfTextAtSize(candidate, size);
+    if (w <= maxWidth) {
+      current = candidate;
+    } else {
+      if (current) lines.push(current);
+      // word itself longer than line — hard-break
+      if (font.widthOfTextAtSize(word, size) > maxWidth) {
+        let buf = "";
+        for (const ch of word) {
+          const tryBuf = buf + ch;
+          if (font.widthOfTextAtSize(tryBuf, size) <= maxWidth) {
+            buf = tryBuf;
+          } else {
+            if (buf) lines.push(buf);
+            buf = ch;
+          }
+        }
+        current = buf;
+      } else {
+        current = word;
+      }
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+async function buildPdfFromText(title: string, content: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create();
+  const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+
+  const PAGE_WIDTH = 612; // 8.5 in * 72
+  const PAGE_HEIGHT = 792; // 11 in * 72
+  const MARGIN = 72; // 1 inch
+  const TEXT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+  const FOOTER_RESERVE = 36; // space above bottom margin for page number
+
+  const SIZES = {
+    title: 16,
+    section: 13,
+    subsection: 12,
+    body: 12,
+  };
+  const LINE_HEIGHTS = {
+    title: 22,
+    section: 18,
+    subsection: 16,
+    body: 16,
+  };
+  const SPACE_BEFORE = {
+    title: 0,
+    section: 14,
+    subsection: 8,
+    body: 0,
+    blank: 8,
+  };
+  const SPACE_AFTER = {
+    title: 18,
+    section: 6,
+    subsection: 4,
+    body: 4,
+    blank: 0,
+  };
+
+  const lines = classifyLines(title, content);
+
+  let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  let cursorY = PAGE_HEIGHT - MARGIN;
+  const pages: import("pdf-lib").PDFPage[] = [page];
+
+  const ensureSpace = (needed: number) => {
+    if (cursorY - needed < MARGIN + FOOTER_RESERVE) {
+      page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      pages.push(page);
+      cursorY = PAGE_HEIGHT - MARGIN;
+    }
+  };
+
+  for (const ln of lines) {
+    if (ln.kind === "blank") {
+      cursorY -= SPACE_BEFORE.blank;
+      continue;
+    }
+
+    const before = SPACE_BEFORE[ln.kind];
+    const after = SPACE_AFTER[ln.kind];
+    cursorY -= before;
+
+    const size = SIZES[ln.kind];
+    const lineHeight = LINE_HEIGHTS[ln.kind];
+    const isBoldLine = ln.kind === "title" || ln.kind === "section";
+    const font = isBoldLine ? timesBold : timesRoman;
+
+    if (ln.kind === "subsection" && ln.boldPrefix) {
+      // First wrapped line gets the bold prefix; remaining wrap normally
+      const prefixWithSpace = `${ln.boldPrefix} `;
+      const prefixWidth = timesBold.widthOfTextAtSize(prefixWithSpace, size);
+      const firstLineWidth = TEXT_WIDTH - prefixWidth;
+      const wrappedFirst = wrapText(ln.text, timesRoman, size, firstLineWidth);
+      const firstLine = wrappedFirst[0] ?? "";
+      const restText = wrappedFirst.slice(1).join(" ");
+      const restWrapped = restText ? wrapText(restText, timesRoman, size, TEXT_WIDTH) : [];
+
+      ensureSpace(lineHeight);
+      page.drawText(prefixWithSpace, {
+        x: MARGIN,
+        y: cursorY - size,
+        size,
+        font: timesBold,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(firstLine, {
+        x: MARGIN + prefixWidth,
+        y: cursorY - size,
+        size,
+        font: timesRoman,
+        color: rgb(0, 0, 0),
+      });
+      cursorY -= lineHeight;
+
+      for (const wl of restWrapped) {
+        ensureSpace(lineHeight);
+        page.drawText(wl, {
+          x: MARGIN,
+          y: cursorY - size,
+          size,
+          font: timesRoman,
+          color: rgb(0, 0, 0),
+        });
+        cursorY -= lineHeight;
+      }
+    } else {
+      const wrapped = wrapText(ln.text, font, size, TEXT_WIDTH);
+      for (const wl of wrapped) {
+        ensureSpace(lineHeight);
+        let x = MARGIN;
+        if (ln.kind === "title") {
+          const w = font.widthOfTextAtSize(wl, size);
+          x = (PAGE_WIDTH - w) / 2;
+        }
+        page.drawText(wl, {
+          x,
+          y: cursorY - size,
+          size,
+          font,
+          color: rgb(0, 0, 0),
+        });
+        cursorY -= lineHeight;
+      }
+    }
+
+    cursorY -= after;
+  }
+
+  // Page numbers in footer
+  const totalPages = pages.length;
+  pages.forEach((p, idx) => {
+    const label = `${idx + 1}`;
+    const w = timesRoman.widthOfTextAtSize(label, 10);
+    void totalPages;
+    p.drawText(label, {
+      x: (PAGE_WIDTH - w) / 2,
+      y: MARGIN / 2,
+      size: 10,
+      font: timesRoman,
+      color: rgb(0.3, 0.3, 0.3),
+    });
+  });
+
+  return pdfDoc.save();
 }
 
 router.get("/documents", requireAuth, async (req, res): Promise<void> => {
@@ -433,6 +693,36 @@ router.post("/documents/download-docx", requireAuth, async (req, res): Promise<v
   } catch (err) {
     req.log.error({ err }, "Failed to build DOCX");
     res.status(500).json({ error: "Failed to build Word document" });
+  }
+});
+
+router.post("/documents/download-pdf", requireAuth, async (req, res): Promise<void> => {
+  const body = (req.body ?? {}) as { title?: unknown; content?: unknown };
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const content = typeof body.content === "string" ? body.content : "";
+
+  if (!title || title.length > 500) {
+    res.status(400).json({ error: "Invalid title" });
+    return;
+  }
+  if (!content || content.length > 500_000) {
+    res.status(400).json({ error: "Invalid content" });
+    return;
+  }
+
+  try {
+    const pdfBytes = await buildPdfFromText(title, content);
+    const buffer = Buffer.from(pdfBytes);
+    const safeFilename =
+      title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_").slice(0, 80) || "document";
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}.pdf"`);
+    res.setHeader("Content-Length", buffer.length.toString());
+    res.end(buffer);
+  } catch (err) {
+    req.log.error({ err }, "Failed to build PDF");
+    res.status(500).json({ error: "Failed to build PDF" });
   }
 });
 
