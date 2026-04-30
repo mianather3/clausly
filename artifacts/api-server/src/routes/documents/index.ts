@@ -13,9 +13,7 @@ import {
   AlignmentType,
   PageNumber,
   Footer,
-  Header,
   convertInchesToTwip,
-  SectionType,
 } from "docx";
 
 const router: IRouter = Router();
@@ -405,31 +403,37 @@ router.get("/documents/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(GetDocumentResponse.parse(doc));
 });
 
-router.get("/documents/:id/docx", requireAuth, async (req, res): Promise<void> => {
-  const params = GetDocumentParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
+router.post("/documents/download-docx", requireAuth, async (req, res): Promise<void> => {
+  const body = (req.body ?? {}) as { title?: unknown; content?: unknown };
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const content = typeof body.content === "string" ? body.content : "";
+
+  if (!title || title.length > 500) {
+    res.status(400).json({ error: "Invalid title" });
+    return;
+  }
+  if (!content || content.length > 500_000) {
+    res.status(400).json({ error: "Invalid content" });
     return;
   }
 
-  const userId = (req as any).userId as string;
-  const [doc] = await db
-    .select()
-    .from(documentsTable)
-    .where(and(eq(documentsTable.id, params.data.id), eq(documentsTable.userId, userId)));
+  try {
+    const wordDoc = buildDocxFromText(title, content);
+    const buffer = await Packer.toBuffer(wordDoc);
+    const safeFilename =
+      title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_").slice(0, 80) || "document";
 
-  if (!doc) {
-    res.status(404).json({ error: "Document not found" });
-    return;
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}.docx"`);
+    res.setHeader("Content-Length", buffer.length.toString());
+    res.end(buffer);
+  } catch (err) {
+    req.log.error({ err }, "Failed to build DOCX");
+    res.status(500).json({ error: "Failed to build Word document" });
   }
-
-  const wordDoc = buildDocxFromText(doc.title, doc.content);
-  const buffer = await Packer.toBuffer(wordDoc);
-  const safeFilename = doc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_").slice(0, 80);
-
-  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-  res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}.docx"`);
-  res.send(buffer);
 });
 
 router.delete("/documents/:id", requireAuth, async (req, res): Promise<void> => {

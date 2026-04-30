@@ -44,20 +44,38 @@ export default function DocumentDetailPage({ id }: { id: string }) {
     setDownloadingDocx(true);
     try {
       const token = await getToken();
-      const response = await fetch(`/api/documents/${doc.id}/docx`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch(`/api/documents/download-docx`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: doc.title, content: doc.content }),
       });
-      if (!response.ok) throw new Error("Download failed");
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
+      }
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("wordprocessingml")) {
+        throw new Error(`Expected .docx but got ${contentType}`);
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${doc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_")}.docx`;
+      a.download = `${doc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_") || "document"}.docx`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast({ title: "Word document downloaded." });
-    } catch {
-      toast({ title: "Failed to download Word document.", variant: "destructive" });
+    } catch (err) {
+      toast({
+        title: "Failed to download Word document.",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
     } finally {
       setDownloadingDocx(false);
     }
