@@ -21,6 +21,27 @@ function stripMarkdownBold(s: string): string {
   return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1");
 }
 
+const SIGNATURE_LINE = "________________________________"; // 32 underscores
+const SIGNATURE_LABEL_RE =
+  /^(\s*)(By|Name|Print(?:ed)?\s+Name|Title|Date|Signature|Witness|Address|Email|Phone)(\s*):\s*_{0,}\s*$/i;
+
+function normalizeSignatureLines(content: string): string {
+  return content
+    .split("\n")
+    .map((line) => {
+      const m = line.match(SIGNATURE_LABEL_RE);
+      if (m) {
+        return `${m[1]}${m[2]}: ${SIGNATURE_LINE}`;
+      }
+      // Bare underscore-only line — normalize to full width
+      if (/^\s*_{3,}\s*$/.test(line)) {
+        return SIGNATURE_LINE;
+      }
+      return line;
+    })
+    .join("\n");
+}
+
 const router: IRouter = Router();
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -70,7 +91,13 @@ REQUIRED SECTIONS IN THIS EXACT ORDER:
 11. NOTICES — all notices must be in writing; deemed delivered when: (i) personally delivered; (ii) sent by confirmed facsimile; (iii) three (3) business days after deposit in certified U.S. mail, return receipt requested, postage prepaid; or (iv) one (1) business day after deposit with a nationally recognized overnight courier. Include full address block placeholders for each party (ATTN / Name / Address / Contact No. / Email).
 12. DISPUTE RESOLUTION — governing law of ${jurisdiction}; exclusive jurisdiction and venue in the state and federal courts of ${jurisdiction}; parties consent to personal jurisdiction; parties shall first attempt good-faith negotiation for 30 days before initiating litigation.
 13. GENERAL — label this section "GENERAL" (not Miscellaneous). Include: (a) Amendment — only by written instrument signed by both parties; (b) Waiver — failure to enforce is not a waiver; (c) Counterparts — may be executed in counterparts, electronic signatures valid; (d) Disclaimer of Warranties — Confidential Information provided "as is," Disclosing Party makes no representations as to accuracy or completeness; (e) Assignment and Binding Effect — neither party may assign without prior written consent of the other party, except in connection with a merger or acquisition of the assigning party; (f) Entire Agreement — this Agreement constitutes the entire agreement between the parties regarding its subject matter and supersedes all prior agreements, understandings, and discussions.
-14. SIGNATURE BLOCK — use the actual defined short names for each party; include lines for: By (signature), Name (printed), Title, and Date. Format clearly with space for execution.`;
+14. SIGNATURE BLOCK — use the actual defined short names for each party as the heading for each block (one block per party). Format the signature block EXACTLY as shown below, on separate lines, with each label followed by a colon, a space, and exactly thirty-two (32) underscore characters. Do NOT use short underscores like "_______". Use this exact template for EACH party:
+
+[Defined Short Name of Party]
+By: ________________________________
+Name: ________________________________
+Title: ________________________________
+Date: ________________________________`;
 }
 
 function getContractorPrompt(partyA: string, partyB: string, jurisdiction: string, keyTerms: string, additionalContext: string): string {
@@ -107,7 +134,14 @@ REQUIRED SECTIONS IN THIS EXACT ORDER:
 14. DISPUTE RESOLUTION — governing law of ${jurisdiction}; good-faith negotiation for thirty (30) days before filing any action; exclusive jurisdiction and venue in the state and federal courts of ${jurisdiction}.
 15. NOTICES — same format as NDA: in writing, deemed delivered when personally delivered, confirmed facsimile, 3 business days after certified mail, or 1 business day after overnight courier. Full address block placeholders for both parties.
 16. GENERAL — (a) Amendment; (b) Waiver; (c) Counterparts and electronic signatures; (d) Severability; (e) Assignment (neither party may assign without written consent, except Company may assign in connection with a merger or acquisition); (f) Entire Agreement.
-17. SIGNATURE BLOCK — signature lines for both parties using their defined short names, with By / Name / Title / Date.
+17. SIGNATURE BLOCK — use the actual defined short names for each party (Company and Contractor) as the heading for each block (one block per party). Format the signature block EXACTLY as shown below, on separate lines, with each label followed by a colon, a space, and exactly thirty-two (32) underscore characters. Do NOT use short underscores like "_______". Use this exact template for EACH party:
+
+[Defined Short Name of Party]
+By: ________________________________
+Name: ________________________________
+Title: ________________________________
+Date: ________________________________
+
 18. EXHIBIT A — DESCRIPTION OF SERVICES — placeholder section at the end, pre-filled with the key terms provided: ${keyTerms}.`;
 }
 
@@ -234,7 +268,8 @@ Use numbered sections, define all key terms, use formal legal drafting style, an
 }
 
 function buildDocxFromText(title: string, content: string): Document {
-  const lines = content.split("\n");
+  const normalizedContent = normalizeSignatureLines(content);
+  const lines = normalizedContent.split("\n");
   const children: Paragraph[] = [];
 
   // Title — Heading 1, large, centered, bold
@@ -379,7 +414,8 @@ function classifyLines(title: string, content: string): PdfLine[] {
   const out: PdfLine[] = [];
   out.push({ kind: "title", text: stripMarkdownBold(title) });
 
-  for (const rawLine of content.split("\n")) {
+  const normalizedContent = normalizeSignatureLines(content);
+  for (const rawLine of normalizedContent.split("\n")) {
     const line = stripMarkdownBold(rawLine.trim());
     if (!line) {
       out.push({ kind: "blank", text: "" });
