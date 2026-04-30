@@ -44,6 +44,8 @@ export default function DocumentDetailPage({ id }: { id: string }) {
     setDownloadingDocx(true);
     try {
       const token = await getToken();
+      console.log("[docx] token present:", !!token, "len:", token?.length);
+      console.log("[docx] doc.title:", doc.title, "content length:", doc.content?.length);
       const response = await fetch(`/api/documents/download-docx`, {
         method: "POST",
         headers: {
@@ -52,6 +54,11 @@ export default function DocumentDetailPage({ id }: { id: string }) {
         },
         body: JSON.stringify({ title: doc.title, content: doc.content }),
       });
+      console.log("[docx] Status:", response.status);
+      console.log("[docx] Content-Type:", response.headers.get("content-type"));
+      const responseClone = response.clone();
+      const text = await responseClone.text();
+      console.log("[docx] Response preview:", text.slice(0, 200));
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
