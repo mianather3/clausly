@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
 import { useCreateDocument, getListDocumentsQueryKey } from "@workspace/api-client-react";
-import { FileText, Copy, Download, CheckCircle, Loader2 } from "lucide-react";
+import { FileText, Copy, Download, CheckCircle, FileType, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +20,11 @@ const DOC_TYPES = [
 
 export default function GeneratePage() {
   const { toast } = useToast();
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [downloadingDocx, setDownloadingDocx] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [form, setForm] = useState({
     documentType: "",
     partyA: "",
@@ -72,32 +76,88 @@ export default function GeneratePage() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadDocx = async () => {
     if (!generatedDoc) return;
-    const printContent = `
-      <html>
-        <head>
-          <title>${generatedDoc.title}</title>
-          <style>
-            body { font-family: Georgia, serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #1a1a1a; }
-            pre { white-space: pre-wrap; font-family: Georgia, serif; font-size: 14px; }
-            h1 { font-size: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-          </style>
-        </head>
-        <body>
-          <h1>${generatedDoc.title}</h1>
-          <pre>${generatedDoc.content}</pre>
-        </body>
-      </html>
-    `;
-    const blob = new Blob([printContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${generatedDoc.title.replace(/[^a-z0-9]/gi, "_")}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Document downloaded." });
+    setDownloadingDocx(true);
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/documents/download-docx`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: generatedDoc.title, content: generatedDoc.content }),
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
+      }
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("wordprocessingml")) {
+        throw new Error(`Expected .docx but got ${contentType}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${generatedDoc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_") || "document"}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "Word document downloaded." });
+    } catch (err) {
+      toast({
+        title: "Failed to download Word document.",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingDocx(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!generatedDoc) return;
+    setDownloadingPdf(true);
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/documents/download-pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title: generatedDoc.title, content: generatedDoc.content }),
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
+      }
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("pdf")) {
+        throw new Error(`Expected PDF but got ${contentType}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${generatedDoc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_") || "document"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "PDF downloaded." });
+    } catch (err) {
+      toast({
+        title: "Failed to download PDF.",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   return (
@@ -206,7 +266,7 @@ export default function GeneratePage() {
       ) : (
         <div className="space-y-4">
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-row items-start justify-between gap-4 flex-wrap pb-3">
               <div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-400" />
@@ -214,14 +274,29 @@ export default function GeneratePage() {
                 </div>
                 <CardDescription className="text-muted-foreground mt-1">{generatedDoc.title}</CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 flex-shrink-0">
                 <Button onClick={handleCopy} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
                   {copied ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
-                  <Download className="h-4 w-4" />
-                  Download
+                <Button
+                  onClick={handleDownloadDocx}
+                  disabled={downloadingDocx}
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold"
+                >
+                  {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileType className="h-4 w-4" />}
+                  {downloadingDocx ? "Generating..." : "Download Word (.docx)"}
+                </Button>
+                <Button
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf}
+                  variant="outline"
+                  size="sm"
+                  className="border-border text-white hover:bg-secondary gap-2"
+                >
+                  {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {downloadingPdf ? "Generating..." : "Download PDF"}
                 </Button>
               </div>
             </CardHeader>

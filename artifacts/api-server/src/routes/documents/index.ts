@@ -304,8 +304,7 @@ Use numbered sections, define all key terms, use formal legal drafting style, an
 }
 
 function buildDocxFromText(title: string, content: string): Document {
-  const normalizedContent = normalizeSignatureLines(content);
-  const lines = normalizedContent.split("\n");
+  const lines = content.split("\n");
   const children: Paragraph[] = [];
 
   // Title — Heading 1, large, centered, bold
@@ -450,8 +449,7 @@ function classifyLines(title: string, content: string): PdfLine[] {
   const out: PdfLine[] = [];
   out.push({ kind: "title", text: stripMarkdownBold(title) });
 
-  const normalizedContent = normalizeSignatureLines(content);
-  for (const rawLine of normalizedContent.split("\n")) {
+  for (const rawLine of content.split("\n")) {
     const line = stripMarkdownBold(rawLine.trim());
     if (!line) {
       out.push({ kind: "blank", text: "" });
@@ -750,7 +748,7 @@ router.post("/documents/download-docx", requireAuth, async (req, res): Promise<v
   }
 
   try {
-    const wordDoc = buildDocxFromText(title, content);
+    const wordDoc = buildDocxFromText(title, normalizeSignatureLines(content));
     const buffer = await Packer.toBuffer(wordDoc);
     const safeFilename =
       title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_").slice(0, 80) || "document";
@@ -783,7 +781,7 @@ router.post("/documents/download-pdf", requireAuth, async (req, res): Promise<vo
   }
 
   try {
-    const pdfBytes = await buildPdfFromText(title, content);
+    const pdfBytes = await buildPdfFromText(title, normalizeSignatureLines(content));
     const buffer = Buffer.from(pdfBytes);
     const safeFilename =
       title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_").slice(0, 80) || "document";
