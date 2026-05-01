@@ -60,44 +60,74 @@ function getCurrentYear(): number {
 }
 
 function getNdaPrompt(partyA: string, partyB: string, jurisdiction: string, keyTerms: string, additionalContext: string): string {
-  return `You are a senior corporate attorney with 20 years of experience drafting commercial contracts. Draft a complete, attorney-quality Non-Disclosure Agreement using the following information. Output ONLY the document text — no preamble, no explanation, no markdown code blocks.
+  return `You are a senior corporate attorney with 20 years of experience drafting commercial contracts. Draft a complete, attorney-quality Non-Disclosure Agreement. Output ONLY the document text — no preamble, no explanation, no markdown code blocks.
 
-PARTIES:
-- Disclosing Party / Party A: ${partyA}
-- Receiving Party / Party B: ${partyB}
-- Jurisdiction: ${jurisdiction}
-- Effective Date: ${getCurrentDate()}
-- Key Terms: ${keyTerms}
-${additionalContext ? `- Additional Context: ${additionalContext}` : ""}
+CRITICAL INSTRUCTION — READ BEFORE DRAFTING:
+- The Disclosing Party's full legal name is: ${partyA}
+- The Receiving Party's full legal name is: ${partyB}
+- You MUST use these actual names throughout the entire document. NEVER write "Party A" or "Party B" anywhere in the document. NEVER write "[Party Name]" or "[Insert Name]" placeholders. Use the real names provided above.
+- The effective date is: ${getCurrentDate()}. Write this exact date in the document. Do NOT leave a blank or underscore for the date.
+- Governing jurisdiction: ${jurisdiction}
+- Key terms and context: ${keyTerms}
+${additionalContext ? `- Additional context: ${additionalContext}` : ""}
 
 DRAFTING RULES:
-1. Use the current year (${getCurrentYear()}) — never hardcode any other year.
-2. Use the actual party names ("${partyA}" and "${partyB}") throughout the entire document — never say "Party A" or "Party B" after the opening paragraph. In the opening, define a short name in parentheses (e.g., if party is "TechNova Inc." define it as ("TechNova")), then use that short name consistently.
-3. Capitalize all defined terms consistently throughout.
-4. Use formal legal drafting style: active voice where possible, present tense for obligations.
-5. Every section must have a bold numbered heading and one or more numbered subsections.
+1. Current year is ${getCurrentYear()} — use this year; never hardcode any other year.
+2. In the opening paragraph, define a short form for each party in parentheses (e.g., "TechNova Inc." as ("TechNova")). Use that short name for every subsequent reference. Never revert to "Party A" or "Party B".
+3. Capitalize all defined terms (e.g., Confidential Information, Permitted Purpose) consistently throughout.
+4. Formal legal drafting style: active voice where possible, present tense for obligations.
+5. Every section has a numbered heading in ALL CAPS, followed by numbered subsections.
 
-REQUIRED SECTIONS IN THIS EXACT ORDER:
-1. OPENING PARAGRAPH — recite full legal names of both parties, state of incorporation, principal place of business, and effective date. Define short names in parentheses.
-2. RECITALS — two or three "WHEREAS" recitals establishing the business relationship and the purpose (the "Permitted Purpose"). Define "Confidential Information" here broadly (including written, oral, electronic, and tangible information, trade secrets, business plans, financial data, technical data, customer lists, etc., disclosed by either party in connection with the Permitted Purpose).
-3. DEFINITIONS — define only terms not already defined in Recitals: Disclosing Party, Receiving Party, Representatives (limited to employees, directors, officers, attorneys, accountants, and advisors who have a need to know and are bound by confidentiality obligations no less restrictive than this Agreement).
-4. OBLIGATIONS OF CONFIDENTIALITY — detailed obligations including: (a) maintain strict confidence; (b) limit disclosure solely to Representatives; (c) use Confidential Information solely for the Permitted Purpose; (d) promptly notify Disclosing Party upon discovery of any unauthorized disclosure; (e) use at least the same degree of care as each party uses to protect its own confidential information, but in no event less than reasonable care.
-5. EXCLUSIONS FROM CONFIDENTIAL INFORMATION — standalone detailed section: information is excluded if it (a) is or becomes publicly available through no breach by Receiving Party; (b) was already known to Receiving Party prior to disclosure (with prior knowledge evidenced in writing); (c) is independently developed by Receiving Party without use of Confidential Information; (d) is received from a third party under no obligation of confidentiality; (e) must be disclosed pursuant to applicable law, regulation, or court order, provided Receiving Party gives prompt written notice to Disclosing Party and cooperates with any effort to obtain a protective order.
-6. OWNERSHIP OF CONFIDENTIAL INFORMATION — all Confidential Information remains the sole and exclusive property of the Disclosing Party. Nothing herein grants any license, right, or interest in any Confidential Information.
-7. RETURN OF CONFIDENTIAL INFORMATION — upon termination or written request, Receiving Party shall promptly (within 10 business days) return or certifiably destroy all Confidential Information and all copies, summaries, and extracts thereof, and certify such destruction in writing if requested.
-8. TERM AND TERMINATION — specify duration (use the key terms to determine, or default to three (3) years), termination by either party upon thirty (30) days' written notice, and explicit survival of confidentiality obligations for five (5) years post-termination.
-9. INDEMNIFICATION — breaching party shall indemnify, defend, and hold harmless the non-breaching party from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from or related to any breach of this Agreement.
-10. REMEDIES — the parties acknowledge that any breach would cause irreparable harm for which monetary damages would be inadequate compensation. Accordingly, the Disclosing Party shall be entitled to seek specific performance and injunctive or other equitable relief without the requirement of posting bond or other security and without the necessity of proving actual damages, in addition to all other remedies available at law or in equity.
-11. NOTICES — all notices must be in writing; deemed delivered when: (i) personally delivered; (ii) sent by confirmed facsimile; (iii) three (3) business days after deposit in certified U.S. mail, return receipt requested, postage prepaid; or (iv) one (1) business day after deposit with a nationally recognized overnight courier. Include full address block placeholders for each party (ATTN / Name / Address / Contact No. / Email).
-12. DISPUTE RESOLUTION — governing law of ${jurisdiction}; exclusive jurisdiction and venue in the state and federal courts of ${jurisdiction}; parties consent to personal jurisdiction; parties shall first attempt good-faith negotiation for 30 days before initiating litigation.
-13. GENERAL — label this section "GENERAL" (not Miscellaneous). Include: (a) Amendment — only by written instrument signed by both parties; (b) Waiver — failure to enforce is not a waiver; (c) Counterparts — may be executed in counterparts, electronic signatures valid; (d) Disclaimer of Warranties — Confidential Information provided "as is," Disclosing Party makes no representations as to accuracy or completeness; (e) Assignment and Binding Effect — neither party may assign without prior written consent of the other party, except in connection with a merger or acquisition of the assigning party; (f) Entire Agreement — this Agreement constitutes the entire agreement between the parties regarding its subject matter and supersedes all prior agreements, understandings, and discussions.
-14. SIGNATURE BLOCK — use the actual defined short names for each party as the heading for each block (one block per party). Format the signature block EXACTLY as shown below, on separate lines, with each label followed by a colon, a space, and exactly thirty-two (32) underscore characters. Do NOT use short underscores like "_______". Use this exact template for EACH party:
+REQUIRED SECTIONS — include every one of these, in this exact order, numbered 1 through 14:
 
-[Defined Short Name of Party]
+1. OPENING PARAGRAPH
+Recite the full legal name of each party, their state of incorporation, principal place of business, and the effective date (${getCurrentDate()}). Define short-form names in parentheses.
+
+2. RECITALS
+Two or three WHEREAS recitals establishing the business relationship and the Permitted Purpose. Define "Confidential Information" broadly here: written, oral, electronic, and tangible information including trade secrets, business plans, financial data, technical data, customer lists, and any other information disclosed by either party in connection with the Permitted Purpose.
+
+3. DEFINITIONS
+Define terms not already defined in the Recitals: Disclosing Party, Receiving Party, Representatives (limited to employees, directors, officers, attorneys, accountants, and advisors who have a need to know and are bound by obligations no less restrictive than this Agreement).
+
+4. OBLIGATIONS OF CONFIDENTIALITY
+Subsections covering: (a) maintain strict confidence; (b) limit disclosure solely to Representatives; (c) use Confidential Information solely for the Permitted Purpose; (d) promptly notify Disclosing Party upon discovering any unauthorized disclosure; (e) use at least the same degree of care as each party uses to protect its own confidential information, but no less than reasonable care.
+
+5. EXCLUSIONS FROM CONFIDENTIAL INFORMATION
+Standalone section. Exclusions: (a) publicly available through no breach by Receiving Party; (b) already known prior to disclosure (evidenced in writing); (c) independently developed without use of Confidential Information; (d) received from a third party under no confidentiality obligation; (e) required to be disclosed by law or court order, provided Receiving Party gives prompt written notice and cooperates with any protective order effort.
+
+6. OWNERSHIP OF CONFIDENTIAL INFORMATION
+All Confidential Information remains the sole and exclusive property of the Disclosing Party. This Agreement grants no license, right, or interest in any Confidential Information.
+
+7. RETURN OF CONFIDENTIAL INFORMATION
+Upon termination or written request, Receiving Party shall promptly (within 10 business days) return or certifiably destroy all Confidential Information and all copies, summaries, and extracts, and provide written certification of destruction upon request.
+
+8. TERM AND TERMINATION
+Specify duration based on key terms, or default to three (3) years. Either party may terminate upon thirty (30) days' written notice. Confidentiality obligations survive termination for five (5) years.
+
+9. INDEMNIFICATION
+Breaching party shall indemnify, defend, and hold harmless the non-breaching party from all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from any breach of this Agreement.
+
+10. REMEDIES
+The parties acknowledge that any breach would cause irreparable harm for which monetary damages would be inadequate. The Disclosing Party is entitled to seek specific performance and injunctive or equitable relief without posting bond or proving actual damages, in addition to all remedies at law or in equity.
+
+11. NOTICES
+All notices must be in writing; deemed delivered when: (i) personally delivered; (ii) sent by confirmed facsimile; (iii) three (3) business days after deposit in certified U.S. mail, return receipt requested; or (iv) one (1) business day after deposit with a nationally recognized overnight courier. Include full address block placeholders for each party: ATTN / Name / Address / Phone / Email.
+
+12. DISPUTE RESOLUTION
+Governing law: ${jurisdiction}. Exclusive jurisdiction and venue in the state and federal courts of ${jurisdiction}. Parties consent to personal jurisdiction. Parties shall first attempt good-faith negotiation for 30 days before initiating litigation.
+
+13. GENERAL
+Label this section "GENERAL". Include: (a) Amendment — only by written instrument signed by both parties; (b) Waiver — failure to enforce is not a waiver; (c) Counterparts — may be executed in counterparts, electronic signatures valid; (d) Disclaimer of Warranties — Confidential Information provided "as is," Disclosing Party makes no representations as to accuracy or completeness; (e) Assignment and Binding Effect — neither party may assign without prior written consent of the other, except in connection with a merger or acquisition; (f) Entire Agreement — this Agreement supersedes all prior agreements regarding its subject matter.
+
+14. SIGNATURE BLOCK
+One block per party, headed by the party's defined short name. Each block must contain exactly these four lines, in this order, with exactly 32 underscore characters after the colon and space:
+
 By: ________________________________
 Name: ________________________________
 Title: ________________________________
-Date: ________________________________`;
+Date: ________________________________
+
+Do not use fewer underscores. Do not substitute dashes or blanks.`;
 }
 
 function getContractorPrompt(partyA: string, partyB: string, jurisdiction: string, keyTerms: string, additionalContext: string): string {
