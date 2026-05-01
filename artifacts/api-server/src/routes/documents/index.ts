@@ -21,14 +21,20 @@ function stripMarkdownBold(s: string): string {
   return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1");
 }
 
-const SIGNATURE_LINE = "________________________________"; // 32 underscores
+const SIGNATURE_LINE = "________________________________"; // 32 underscores — do NOT shorten
 const SIGNATURE_LABEL_RE =
-  /^(\s*)(By|Name|Print(?:ed)?\s+Name|Title|Date|Signature|Witness|Address|Email|Phone)(\s*):\s*_{0,}\s*$/i;
+  /^(\s*)(By|Name|Printed?\s+Name|Title|Date|Signature|Witness)(\s*):\s*_{0,}\s*$/i;
 
 function normalizeSignatureLines(content: string): string {
   return content
     .split("\n")
-    .map((line) => {
+    .map((rawLine) => {
+      // Strip markdown bold/italic first so **By:** becomes By:
+      const line = rawLine
+        .replace(/\*\*(.+?)\*\*/g, "$1")
+        .replace(/__(.+?)__/g, "$1")
+        .replace(/\*(.+?)\*/g, "$1");
+
       const m = line.match(SIGNATURE_LABEL_RE);
       if (m) {
         return `${m[1]}${m[2]}: ${SIGNATURE_LINE}`;
