@@ -84,6 +84,24 @@ router.get("/admin/stats", requireAdmin, async (req: Request, res: Response): Pr
 
   const reviewMap = new Map(reviewsByUser.map((r) => [r.userId, r]));
 
+  const uniqueUserIds = [...new Set(docsByUser.map((d) => d.userId))];
+
+  // Fetch all user emails from Clerk in parallel — server-side only, secret key never sent to browser
+  const emailMap = new Map<string, string>();
+  await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      try {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        const email =
+          clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)
+            ?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress ?? null;
+        if (email) emailMap.set(userId, email);
+      } catch {
+        // user may have been deleted from Clerk — leave email blank
+      }
+    })
+  );
+
   const userActivity = docsByUser
     .map((d) => {
       const r = reviewMap.get(d.userId);
@@ -91,6 +109,7 @@ router.get("/admin/stats", requireAdmin, async (req: Request, res: Response): Pr
       const lastDates = [d.lastDoc, r?.lastReview].filter(Boolean) as string[];
       return {
         userId: d.userId,
+        email: emailMap.get(d.userId) ?? null,
         docCount: d.docCount,
         reviewCount: r?.reviewCount ?? 0,
         firstActivity: dates.sort()[0] ?? d.firstDoc,

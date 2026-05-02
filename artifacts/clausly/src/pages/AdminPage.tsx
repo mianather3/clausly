@@ -40,6 +40,7 @@ interface AdminStats {
   docsPerDay: { day: string; count: number }[];
   userActivity: {
     userId: string;
+    email: string | null;
     docCount: number;
     reviewCount: number;
     firstActivity: string;
@@ -301,6 +302,7 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
+                    <th className="text-left px-4 py-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">Email</th>
                     <th className="text-left px-4 py-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">User ID</th>
                     <th className="text-right px-4 py-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">Documents</th>
                     <th className="text-right px-4 py-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">Reviews</th>
@@ -311,6 +313,9 @@ export default function AdminPage() {
                 <tbody>
                   {(stats?.userActivity ?? []).map((u) => (
                     <tr key={u.userId} className="border-b border-border/50 hover:bg-background/40 transition-colors">
+                      <td className="px-4 py-2 text-white text-sm" title={u.email ?? u.userId}>
+                        {u.email ?? <span className="text-muted-foreground italic">unknown</span>}
+                      </td>
                       <td className="px-4 py-2 font-mono text-xs text-muted-foreground" title={u.userId}>
                         {shortUserId(u.userId)}
                       </td>
@@ -321,7 +326,7 @@ export default function AdminPage() {
                     </tr>
                   ))}
                   {(stats?.userActivity ?? []).length === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No activity yet</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">No activity yet</td></tr>
                   )}
                 </tbody>
               </table>
