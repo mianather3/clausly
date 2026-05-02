@@ -16,6 +16,7 @@ import DocumentsListPage from "./pages/DocumentsListPage";
 import DocumentDetailPage from "./pages/DocumentDetailPage";
 import ReviewsListPage from "./pages/ReviewsListPage";
 import ReviewDetailPage from "./pages/ReviewDetailPage";
+import AdminPage from "./pages/AdminPage";
 import { AppLayout } from "./components/AppLayout";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -131,6 +132,9 @@ function ClerkProviderWithRoutes() {
             </Route>
             <Route path="/reviews/:id">
               {(params) => <ProtectedRoute component={ReviewDetailPage} id={params.id} />}
+            </Route>
+            <Route path="/admin">
+              {() => <ProtectedRoute component={AdminPage} />}
             </Route>
             
             <Route component={NotFound} />
