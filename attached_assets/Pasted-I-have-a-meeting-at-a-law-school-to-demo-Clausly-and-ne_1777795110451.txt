@@ -1,0 +1,12 @@
+I have a meeting at a law school to demo Clausly and need the product to be polished and professional. Make these specific improvements:
+Fix 1 — Document quality audit:
+Generate a test NDA, Independent Contractor Agreement, Privacy Policy, and Terms of Service. Verify that every document uses actual party names throughout (never Party A or Party B after the opening), uses the current date automatically, and includes all required sections. If any document type is missing sections or regressing to old format, fix the generation prompt for that document type immediately.
+Fix 2 — Legal disclaimer prominence:
+Add a clearly visible legal disclaimer banner to three places: (1) the bottom of the landing page, (2) the top of the Generate Document page, (3) the top of the Review Contract page. The disclaimer should read exactly: 'Clausly generates documents for informational purposes only. Nothing on this platform constitutes legal advice or creates an attorney-client relationship. Always consult a licensed attorney before executing any legal document.' Style it as a subtle but visible banner using a dark background with gold text, small font, not aggressive but clearly present.
+Fix 3 — Landing page clarity:
+Update the landing page subheadline to read: 'Generate attorney-quality NDAs, contractor agreements, privacy policies, and terms of service in 60 seconds — and review any contract for risky clauses with an AI-powered risk score.' This should replace the current subheadline under the main hero headline.
+Fix 4 — Demo mode:
+Add a 'Try Demo' button on the landing page that does not require signup. When clicked it shows a pre-generated sample NDA between two fictional companies with a note saying 'Sample document — sign up to generate your own.' This lets law school reviewers see document quality immediately without creating an account.
+Fix 5 — Contract review polish:
+On the contract review results page, make the risk score display more visually impressive. The score number should be large (4rem), bold, and color-coded: 1-3 green, 4-6 yellow, 7-10 red. Add a label below the score saying the risk level in words: Low Risk, Moderate Risk, or High Risk. This is the most impressive part of the demo and should look striking.
+Redeploy after all fixes are complete.

@@ -17,12 +17,12 @@ interface RiskyClause {
 function RiskScore({ score }: { score: number }) {
   const color = score <= 3 ? "text-green-400" : score <= 6 ? "text-yellow-400" : "text-red-400";
   const bgColor = score <= 3 ? "bg-green-400/10 border-green-400/20" : score <= 6 ? "bg-yellow-400/10 border-yellow-400/20" : "bg-red-400/10 border-red-400/20";
-  const label = score <= 3 ? "Low Risk" : score <= 6 ? "Medium Risk" : "High Risk";
+  const label = score <= 3 ? "Low Risk" : score <= 6 ? "Moderate Risk" : "High Risk";
   return (
-    <div className={`flex flex-col items-center justify-center p-6 rounded-sm border ${bgColor}`}>
-      <div className={`text-6xl font-bold font-serif ${color}`}>{score}</div>
-      <div className="text-muted-foreground text-xs mt-1">out of 10</div>
-      <div className={`text-base font-semibold mt-2 ${color}`}>{label}</div>
+    <div className={`flex flex-col items-center justify-center p-8 rounded-sm border ${bgColor}`}>
+      <div className={`font-bold font-serif leading-none ${color}`} style={{ fontSize: "4rem" }}>{score}</div>
+      <div className="text-muted-foreground text-sm mt-2">out of 10</div>
+      <div className={`font-bold mt-3 tracking-wide uppercase text-sm ${color}`}>{label}</div>
     </div>
   );
 }

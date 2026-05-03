@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateReview, getListReviewsQueryKey } from "@workspace/api-client-react";
 import { FileSearch, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp, Upload, X, FileText } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,13 +21,13 @@ interface RiskyClause {
 function RiskScore({ score }: { score: number }) {
   const color = score <= 3 ? "text-green-400" : score <= 6 ? "text-yellow-400" : "text-red-400";
   const bgColor = score <= 3 ? "bg-green-400/10 border-green-400/20" : score <= 6 ? "bg-yellow-400/10 border-yellow-400/20" : "bg-red-400/10 border-red-400/20";
-  const label = score <= 3 ? "Low Risk" : score <= 6 ? "Medium Risk" : "High Risk";
+  const label = score <= 3 ? "Low Risk" : score <= 6 ? "Moderate Risk" : "High Risk";
 
   return (
     <div className={`flex flex-col items-center justify-center p-8 rounded-sm border ${bgColor}`}>
-      <div className={`text-7xl font-bold font-serif ${color}`}>{score}</div>
-      <div className="text-muted-foreground text-sm mt-1">out of 10</div>
-      <div className={`text-lg font-semibold mt-3 ${color}`}>{label}</div>
+      <div className={`font-bold font-serif leading-none ${color}`} style={{ fontSize: "4rem" }}>{score}</div>
+      <div className="text-muted-foreground text-sm mt-2">out of 10</div>
+      <div className={`text-lg font-bold mt-3 tracking-wide uppercase text-sm ${color}`}>{label}</div>
     </div>
   );
 }
@@ -207,6 +208,14 @@ export default function ReviewPage() {
       <div>
         <h1 className="text-2xl font-serif font-bold text-white">Review a Contract</h1>
         <p className="text-muted-foreground mt-1">Upload a PDF or DOCX file, or paste your contract text, and get instant AI-powered risk analysis.</p>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-sm border border-amber-500/30 bg-amber-500/8 px-4 py-3">
+        <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-200/80 leading-relaxed">
+          <span className="font-semibold text-amber-300">Legal Disclaimer: </span>
+          Clausly generates documents for informational purposes only. Nothing on this platform constitutes legal advice or creates an attorney-client relationship. Always consult a licensed attorney before executing any legal document.
+        </p>
       </div>
 
       {!result ? (

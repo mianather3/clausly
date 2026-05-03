@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
 import { useCreateDocument, getListDocumentsQueryKey } from "@workspace/api-client-react";
-import { FileText, Copy, Download, CheckCircle, FileType, Loader2 } from "lucide-react";
+import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -165,6 +165,14 @@ export default function GeneratePage() {
       <div>
         <h1 className="text-2xl font-serif font-bold text-white">Generate a Legal Document</h1>
         <p className="text-muted-foreground mt-1">Fill in the details below and let AI draft your document.</p>
+      </div>
+
+      <div className="flex items-start gap-3 rounded-sm border border-amber-500/30 bg-amber-500/8 px-4 py-3">
+        <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-200/80 leading-relaxed">
+          <span className="font-semibold text-amber-300">Legal Disclaimer: </span>
+          Clausly generates documents for informational purposes only. Nothing on this platform constitutes legal advice or creates an attorney-client relationship. Always consult a licensed attorney before executing any legal document.
+        </p>
       </div>
 
       {!generatedDoc ? (
