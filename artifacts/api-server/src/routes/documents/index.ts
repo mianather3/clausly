@@ -294,7 +294,7 @@ Use numbered sections, define all key terms, use formal legal drafting style, an
     messages: [
       {
         role: "system",
-        content: "You are an expert legal document drafter. Output only the document text with no explanations, no preamble, and no markdown formatting markers like ``` or **. Use plain text formatting with ALL CAPS for section headings and numbered subsections."
+        content: "You are an expert legal document drafter. Output only the document text with no explanations, no preamble, and no markdown formatting markers like ``` or **. Use plain text formatting. For NDAs and legal contracts, use ALL CAPS for section headings. For Privacy Policies and Terms of Service, use Title Case for section headings and normal sentence case for all body text."
       },
       { role: "user", content: prompt }
     ],
