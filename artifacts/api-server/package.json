@@ -23,7 +23,8 @@
     "openai": "^6.34.0",
     "pdf-lib": "^1.17.1",
     "pino": "^9",
-    "pino-http": "^10"
+    "pino-http": "^10",
+    "resend": "^6.12.4"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

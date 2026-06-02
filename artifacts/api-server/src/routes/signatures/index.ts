@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, documentsTable, signatureRequestsTable } from "@workspace/db";
 import { requireAuth } from "../../middlewares/requireAuth";
 import type { Request, Response } from "express";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const router: IRouter = Router();
 
@@ -13,24 +13,16 @@ function getAppUrl(): string {
   return process.env.APP_URL || "http://localhost:80";
 }
 
-function createTransport() {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) return null;
-  return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
-}
-
 async function sendMail(to: string, subject: string, html: string) {
-  const transport = createTransport();
-  const from = process.env.FROM_EMAIL || process.env.SMTP_USER || "noreply@clausly.net";
-  if (!transport) {
-    // No SMTP configured — log so the link is accessible during dev/demo
-    console.warn(`[Email not sent — no SMTP configured]\nTo: ${to}\nSubject: ${subject}`);
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.FROM_EMAIL || "noreply@clausly.net";
+  if (!apiKey) {
+    console.warn(`[Email not sent — RESEND_API_KEY not set]\nTo: ${to}\nSubject: ${subject}`);
     return;
   }
-  await transport.sendMail({ from, to, subject, html });
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({ from, to, subject, html });
+  if (error) throw new Error(`Resend error: ${error.message}`);
 }
 
 // POST /api/documents/:id/request-signature — authenticated
