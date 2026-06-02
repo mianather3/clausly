@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useGetReview } from "@workspace/api-client-react";
-import { ArrowLeft, AlertTriangle, CheckCircle, FileSearch, ChevronDown, ChevronUp } from "lucide-react";
+import { useAuth } from "@clerk/react";
+import {
+  ArrowLeft, AlertTriangle, CheckCircle, FileSearch, ChevronDown, ChevronUp,
+  Share2, Copy, Loader2, Link2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 interface RiskyClause {
   clause: string;
@@ -66,10 +71,16 @@ function formatDate(dateStr: string) {
 }
 
 export default function ReviewDetailPage({ id }: { id: string }) {
+  const { toast } = useToast();
+  const { getToken } = useAuth();
   const reviewId = parseInt(id, 10);
   const { data: review, isLoading, error } = useGetReview(reviewId, {
     query: { enabled: !!reviewId && !isNaN(reviewId) },
   });
+
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   let riskyClauses: RiskyClause[] = [];
   let summary = "";
@@ -77,6 +88,31 @@ export default function ReviewDetailPage({ id }: { id: string }) {
     try { riskyClauses = JSON.parse(review.riskyClausesJson || "[]"); } catch {}
     try { summary = JSON.parse(review.summaryJson || "{}").summary || ""; } catch {}
   }
+
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      const token = await getToken();
+      const r = await fetch(`/api/reviews/${reviewId}/share`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error((await r.json()).error || "Failed");
+      const data = await r.json() as { token: string };
+      setShareToken(data.token);
+    } catch (err) {
+      toast({ title: "Failed to generate share link.", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+    } finally { setSharing(false); }
+  };
+
+  const handleCopyLink = () => {
+    if (!shareToken) return;
+    const url = `${window.location.origin}/shared-review/${shareToken}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+    toast({ title: "Link copied to clipboard!", description: "Anyone with this link can view the risk analysis." });
+  };
 
   if (isLoading) {
     return (
@@ -104,13 +140,44 @@ export default function ReviewDetailPage({ id }: { id: string }) {
 
   return (
     <div className="max-w-4xl space-y-5">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link href="/reviews">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Reviews
           </Button>
         </Link>
+
+        <div className="flex items-center gap-2">
+          {shareToken ? (
+            <>
+              <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-sm px-3 py-1.5 text-xs text-muted-foreground max-w-xs truncate">
+                <Link2 className="h-3 w-3 flex-shrink-0 text-primary" />
+                <span className="truncate">{`${window.location.origin}/shared-review/${shareToken}`}</span>
+              </div>
+              <Button
+                onClick={handleCopyLink}
+                size="sm"
+                variant="outline"
+                className="border-border text-white hover:bg-secondary gap-2 flex-shrink-0"
+              >
+                {copiedLink ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                {copiedLink ? "Copied!" : "Copy Link"}
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={handleShare}
+              disabled={sharing}
+              size="sm"
+              variant="outline"
+              className="border-border text-white hover:bg-secondary gap-2"
+            >
+              {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+              {sharing ? "Generating..." : "Share Results"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div>

@@ -1,0 +1,2 @@
+- [Express 5 params typing](express5-params.md) — req.params values are string | string[], always cast with `as string` in new routes
+- [DB push interactive workaround](db-push-workaround.md) — drizzle-kit push blocks on TTY prompts; bypass by running CREATE TABLE IF NOT EXISTS via node with lib/db/node_modules/pg Pool

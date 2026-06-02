@@ -1,0 +1,178 @@
+import { Router, type IRouter } from "express";
+import { eq } from "drizzle-orm";
+import { db, documentsTable, signatureRequestsTable } from "@workspace/db";
+import { requireAuth } from "../../middlewares/requireAuth";
+import type { Request, Response } from "express";
+import nodemailer from "nodemailer";
+
+const router: IRouter = Router();
+
+function getAppUrl(): string {
+  const domains = process.env.REPLIT_DOMAINS;
+  if (domains) return `https://${domains.split(",")[0].trim()}`;
+  return process.env.APP_URL || "http://localhost:80";
+}
+
+function createTransport() {
+  const host = process.env.SMTP_HOST;
+  const port = parseInt(process.env.SMTP_PORT || "587", 10);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) return null;
+  return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+}
+
+async function sendMail(to: string, subject: string, html: string) {
+  const transport = createTransport();
+  const from = process.env.FROM_EMAIL || process.env.SMTP_USER || "noreply@clausly.net";
+  if (!transport) {
+    // No SMTP configured — log so the link is accessible during dev/demo
+    console.warn(`[Email not sent — no SMTP configured]\nTo: ${to}\nSubject: ${subject}`);
+    return;
+  }
+  await transport.sendMail({ from, to, subject, html });
+}
+
+// POST /api/documents/:id/request-signature — authenticated
+router.post("/documents/:id/request-signature", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const docId = parseInt(req.params.id as string, 10);
+  if (isNaN(docId)) { res.status(400).json({ error: "Invalid document id" }); return; }
+
+  const { recipientEmail, recipientName } = req.body as { recipientEmail?: string; recipientName?: string };
+  if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+    res.status(400).json({ error: "Valid recipient email is required" });
+    return;
+  }
+
+  const userId = (req as any).userId as string;
+  const [doc] = await db.select().from(documentsTable).where(eq(documentsTable.id, docId));
+  if (!doc || doc.userId !== userId) { res.status(404).json({ error: "Document not found" }); return; }
+
+  // Check for existing pending request
+  const existing = await db.select().from(signatureRequestsTable)
+    .where(eq(signatureRequestsTable.documentId, docId));
+  const pending = existing.find(r => r.status === "pending");
+  if (pending) { res.json({ id: pending.id, status: pending.status, uniqueToken: pending.uniqueToken }); return; }
+
+  const token = crypto.randomUUID();
+  const [sigReq] = await db.insert(signatureRequestsTable).values({
+    documentId: docId,
+    senderUserId: userId,
+    recipientEmail,
+    recipientName: recipientName || null,
+    status: "pending",
+    uniqueToken: token,
+  }).returning();
+
+  const appUrl = getAppUrl();
+  const signLink = `${appUrl}/sign/${token}`;
+
+  await sendMail(
+    recipientEmail,
+    `Please sign: ${doc.title}`,
+    `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:24px">
+      <h2 style="color:#1a2744">You have a document to sign</h2>
+      <p>You have been invited to review and sign the following document:</p>
+      <p style="font-weight:bold;font-size:1.1em">${doc.title}</p>
+      <p>Click the button below to view and sign the document. No account required.</p>
+      <a href="${signLink}" style="display:inline-block;background:#b8962e;color:#fff;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;margin:16px 0">
+        View &amp; Sign Document
+      </a>
+      <p style="font-size:0.85em;color:#666">Or copy this link: ${signLink}</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+      <p style="font-size:0.8em;color:#999">Powered by Clausly — clausly.net</p>
+    </div>`
+  );
+
+  req.log.info({ docId, recipientEmail, token }, "Signature request created");
+  res.status(201).json({ id: sigReq.id, status: sigReq.status, uniqueToken: sigReq.uniqueToken });
+});
+
+// GET /api/documents/:id/signature-status — authenticated, returns latest request for this doc
+router.get("/documents/:id/signature-status", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const docId = parseInt(req.params.id as string, 10);
+  if (isNaN(docId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const userId = (req as any).userId as string;
+  const [doc] = await db.select({ id: documentsTable.id }).from(documentsTable)
+    .where(eq(documentsTable.id, docId));
+  if (!doc) { res.status(404).json({ error: "Not found" }); return; }
+  const reqs = await db.select().from(signatureRequestsTable)
+    .where(eq(signatureRequestsTable.documentId, docId));
+  void userId;
+  const latest = reqs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
+  if (!latest) { res.json(null); return; }
+  res.json({
+    id: latest.id,
+    status: latest.status,
+    recipientEmail: latest.recipientEmail,
+    recipientName: latest.recipientName,
+    uniqueToken: latest.uniqueToken,
+    createdAt: latest.createdAt,
+    recipientSignedAt: latest.recipientSignedAt,
+  });
+});
+
+// GET /api/sign/:token — public
+router.get("/sign/:token", async (req: Request, res: Response): Promise<void> => {
+  const token = req.params.token as string;
+  const [sigReq] = await db.select().from(signatureRequestsTable)
+    .where(eq(signatureRequestsTable.uniqueToken, token));
+  if (!sigReq) { res.status(404).json({ error: "Signature request not found" }); return; }
+  const [doc] = await db.select().from(documentsTable).where(eq(documentsTable.id, sigReq.documentId));
+  if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
+  res.json({
+    document: { id: doc.id, title: doc.title, content: doc.content, documentType: doc.documentType },
+    signatureRequest: {
+      id: sigReq.id,
+      status: sigReq.status,
+      recipientEmail: sigReq.recipientEmail,
+      recipientName: sigReq.recipientName,
+      recipientSignedAt: sigReq.recipientSignedAt,
+    },
+  });
+});
+
+// POST /api/sign/:token — public, recipient signs
+router.post("/sign/:token", async (req: Request, res: Response): Promise<void> => {
+  const token = req.params.token as string;
+  const { fullName } = req.body as { fullName?: string };
+  if (!fullName?.trim()) { res.status(400).json({ error: "Full name is required" }); return; }
+
+  const [sigReq] = await db.select().from(signatureRequestsTable)
+    .where(eq(signatureRequestsTable.uniqueToken, token));
+  if (!sigReq) { res.status(404).json({ error: "Signature request not found" }); return; }
+  if (sigReq.status === "signed") { res.status(409).json({ error: "Already signed" }); return; }
+
+  const [doc] = await db.select().from(documentsTable).where(eq(documentsTable.id, sigReq.documentId));
+  if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
+
+  const now = new Date();
+  const [updated] = await db.update(signatureRequestsTable)
+    .set({ status: "signed", recipientName: fullName.trim(), recipientSignedAt: now })
+    .where(eq(signatureRequestsTable.uniqueToken, token))
+    .returning();
+
+  const appUrl = getAppUrl();
+
+  // Confirmation to recipient
+  await sendMail(
+    sigReq.recipientEmail,
+    `You signed: ${doc.title}`,
+    `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:24px">
+      <h2 style="color:#1a2744">Document signed successfully</h2>
+      <p>Hi ${fullName},</p>
+      <p>You have successfully signed <strong>${doc.title}</strong> on ${now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.</p>
+      <p>Your typed signature: <em>${fullName}</em></p>
+      <p style="font-size:0.8em;color:#999">Powered by Clausly — clausly.net</p>
+    </div>`
+  );
+
+  // Notify sender — look up any user email we have (best-effort)
+  // We don't store sender email in DB, so just log for now
+  req.log.info({ docId: doc.id, signer: fullName }, "Document signed by recipient");
+  void appUrl;
+
+  res.json({ status: updated.status, recipientName: updated.recipientName, recipientSignedAt: updated.recipientSignedAt });
+});
+
+export default router;

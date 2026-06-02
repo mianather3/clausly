@@ -427,6 +427,17 @@ function buildDocxFromText(title: string, content: string): Document {
                   }),
                 ],
               }),
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    text: "Created with Clausly \u2014 clausly.net",
+                    font: "Times New Roman",
+                    size: 16,
+                    color: "888888",
+                  }),
+                ],
+              }),
             ],
           }),
         },
@@ -647,8 +658,9 @@ async function buildPdfFromText(title: string, content: string): Promise<Uint8Ar
     cursorY -= after;
   }
 
-  // Page numbers in footer
+  // Footer: page number (center) + watermark (right)
   const totalPages = pages.length;
+  const watermarkText = "Created with Clausly \u2014 clausly.net";
   pages.forEach((p, idx) => {
     const label = `${idx + 1}`;
     const w = timesRoman.widthOfTextAtSize(label, 10);
@@ -659,6 +671,14 @@ async function buildPdfFromText(title: string, content: string): Promise<Uint8Ar
       size: 10,
       font: timesRoman,
       color: rgb(0.3, 0.3, 0.3),
+    });
+    const ww = timesRoman.widthOfTextAtSize(watermarkText, 8);
+    p.drawText(watermarkText, {
+      x: PAGE_WIDTH - MARGIN - ww,
+      y: MARGIN / 2,
+      size: 8,
+      font: timesRoman,
+      color: rgb(0.6, 0.6, 0.6),
     });
   });
 

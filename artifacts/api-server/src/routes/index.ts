@@ -4,6 +4,8 @@ import documentsRouter from "./documents";
 import reviewsRouter from "./reviews";
 import dashboardRouter from "./dashboard";
 import adminRouter from "./admin";
+import signaturesRouter from "./signatures";
+import sharedReviewsRouter from "./shared-reviews";
 
 const router: IRouter = Router();
 
@@ -12,5 +14,7 @@ router.use(documentsRouter);
 router.use(reviewsRouter);
 router.use(dashboardRouter);
 router.use(adminRouter);
+router.use(signaturesRouter);
+router.use(sharedReviewsRouter);
 
 export default router;

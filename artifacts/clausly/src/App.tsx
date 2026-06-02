@@ -17,6 +17,8 @@ import DocumentDetailPage from "./pages/DocumentDetailPage";
 import ReviewsListPage from "./pages/ReviewsListPage";
 import ReviewDetailPage from "./pages/ReviewDetailPage";
 import AdminPage from "./pages/AdminPage";
+import SignPage from "./pages/SignPage";
+import SharedReviewPage from "./pages/SharedReviewPage";
 import { AppLayout } from "./components/AppLayout";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -47,8 +49,6 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function SignInPage() {
-  // To update login providers, app branding, or OAuth settings use the Auth
-  // pane in the workspace toolbar. More information can be found in the Replit docs.
   return (
     <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
       <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
@@ -57,8 +57,6 @@ function SignInPage() {
 }
 
 function SignUpPage() {
-  // To update login providers, app branding, or OAuth settings use the Auth
-  // pane in the workspace toolbar. More information can be found in the Replit docs.
   return (
     <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
       <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
@@ -111,7 +109,15 @@ function ClerkProviderWithRoutes() {
             <Route path="/" component={HomeRedirect} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
-            
+
+            {/* Public routes — no auth required */}
+            <Route path="/sign/:token">
+              {(params) => <SignPage token={params.token!} />}
+            </Route>
+            <Route path="/shared-review/:token">
+              {(params) => <SharedReviewPage token={params.token!} />}
+            </Route>
+
             <Route path="/dashboard">
               {() => <ProtectedRoute component={DashboardPage} />}
             </Route>
@@ -136,7 +142,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/admin">
               {() => <ProtectedRoute component={AdminPage} />}
             </Route>
-            
+
             <Route component={NotFound} />
           </Switch>
           <Toaster />
