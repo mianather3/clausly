@@ -53,6 +53,16 @@ export interface CreateDocumentBody {
   additionalContext?: string;
 }
 
+export interface ExplainClauseBody {
+  clauseText: string;
+}
+
+export interface ExplainClauseResponse {
+  explanation: string;
+  whyItMatters: string;
+  favoredParty: string;
+}
+
 export interface Review {
   id: number;
   userId: string;
@@ -72,11 +82,77 @@ export interface CreateReviewBody {
   title: string;
 }
 
+export interface Comparison {
+  id: number;
+  userId: string;
+  title: string;
+  contractAText: string;
+  contractBText: string;
+  /** @nullable */
+  differencesJson: string | null;
+  /** @nullable */
+  missingClausesJson: string | null;
+  /** @nullable */
+  assessmentJson: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateComparisonBody {
+  title: string;
+  contractAText: string;
+  contractBText: string;
+}
+
+export type TemplateDocumentType =
+  (typeof TemplateDocumentType)[keyof typeof TemplateDocumentType];
+
+export const TemplateDocumentType = {
+  nda: "nda",
+  privacy_policy: "privacy_policy",
+  contractor_agreement: "contractor_agreement",
+  terms_of_service: "terms_of_service",
+} as const;
+
+export interface Template {
+  id: number;
+  userId: string;
+  name: string;
+  documentType: TemplateDocumentType;
+  partyA: string;
+  /** @nullable */
+  jurisdiction: string | null;
+  keyTerms: string;
+  /** @nullable */
+  additionalContext: string | null;
+  createdAt: string;
+}
+
+export type CreateTemplateBodyDocumentType =
+  (typeof CreateTemplateBodyDocumentType)[keyof typeof CreateTemplateBodyDocumentType];
+
+export const CreateTemplateBodyDocumentType = {
+  nda: "nda",
+  privacy_policy: "privacy_policy",
+  contractor_agreement: "contractor_agreement",
+  terms_of_service: "terms_of_service",
+} as const;
+
+export interface CreateTemplateBody {
+  name: string;
+  documentType: CreateTemplateBodyDocumentType;
+  partyA: string;
+  jurisdiction?: string;
+  keyTerms: string;
+  additionalContext?: string;
+}
+
 export type DashboardStatsDocumentsByType = { [key: string]: number };
 
 export interface DashboardStats {
   totalDocuments: number;
   totalReviews: number;
+  templateCount: number;
   documentsByType: DashboardStatsDocumentsByType;
   /** @nullable */
   avgRiskScore: number | null;

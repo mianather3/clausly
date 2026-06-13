@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
-import { db, documentsTable, reviewsTable } from "@workspace/db";
-import { GetDashboardStatsResponse, GetRecentActivityResponse } from "@workspace/api-zod";
+import { db, documentsTable, reviewsTable, templatesTable } from "@workspace/db";
+import { GetDashboardStatsResponse, GetRecentActivityResponse } from "@workspace/api-zod/schemas";
 import { requireAuth } from "../../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -41,9 +41,15 @@ router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
   const avgRaw = avgRiskResult?.avg;
   const avgRiskScore = avgRaw != null ? Math.round(Number(avgRaw) * 10) / 10 : null;
 
+  const [templateCountResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(templatesTable)
+    .where(eq(templatesTable.userId, userId));
+
   const stats = {
     totalDocuments: docCountResult?.count ?? 0,
     totalReviews: reviewCountResult?.count ?? 0,
+    templateCount: templateCountResult?.count ?? 0,
     documentsByType,
     avgRiskScore,
   };

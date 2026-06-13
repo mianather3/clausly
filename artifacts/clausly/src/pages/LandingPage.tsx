@@ -185,6 +185,9 @@ export default function LandingPage() {
           <span className="font-serif font-bold text-xl text-white tracking-tight">Clausly</span>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/pricing">
+            <Button variant="ghost" className="text-muted-foreground hover:text-white">Pricing</Button>
+          </Link>
           <Link href="/sign-in">
             <Button variant="ghost" className="text-muted-foreground hover:text-white">Sign In</Button>
           </Link>

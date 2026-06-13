@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, reviewsTable } from "@workspace/db";
-import { CreateReviewBody, GetReviewParams, DeleteReviewParams, ListReviewsResponse, GetReviewResponse } from "@workspace/api-zod";
+import { CreateReviewBody, GetReviewParams, DeleteReviewParams, ListReviewsResponse, GetReviewResponse } from "@workspace/api-zod/schemas";
 import { requireAuth } from "../../middlewares/requireAuth";
 import { openai } from "../../lib/openai";
 
@@ -163,11 +163,12 @@ router.delete("/reviews/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const userId = (req as any).userId as string;
-  const [review] = await db
+  const result = await db
     .delete(reviewsTable)
-    .where(and(eq(reviewsTable.id, params.data.id), eq(reviewsTable.userId, userId)));
+    .where(and(eq(reviewsTable.id, params.data.id), eq(reviewsTable.userId, userId)))
+    .returning();
 
-  if (!review) {
+  if (!result.length) {
     res.status(404).json({ error: "Review not found" });
     return;
   }

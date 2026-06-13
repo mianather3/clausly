@@ -17,13 +17,19 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  Comparison,
+  CreateComparisonBody,
   CreateDocumentBody,
   CreateReviewBody,
+  CreateTemplateBody,
   DashboardStats,
   Document,
+  ExplainClauseBody,
+  ExplainClauseResponse,
   HealthStatus,
   RecentActivity,
   Review,
+  Template,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -443,6 +449,93 @@ export const useDeleteDocument = <
 };
 
 /**
+ * @summary Get AI plain-English explanation of a document clause
+ */
+export const getExplainClauseUrl = (id: number) => {
+  return `/api/documents/${id}/explain-clause`;
+};
+
+export const explainClause = async (
+  id: number,
+  explainClauseBody: ExplainClauseBody,
+  options?: RequestInit,
+): Promise<ExplainClauseResponse> => {
+  return customFetch<ExplainClauseResponse>(getExplainClauseUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(explainClauseBody),
+  });
+};
+
+export const getExplainClauseMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof explainClause>>,
+    TError,
+    { id: number; data: BodyType<ExplainClauseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof explainClause>>,
+  TError,
+  { id: number; data: BodyType<ExplainClauseBody> },
+  TContext
+> => {
+  const mutationKey = ["explainClause"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof explainClause>>,
+    { id: number; data: BodyType<ExplainClauseBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return explainClause(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ExplainClauseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof explainClause>>
+>;
+export type ExplainClauseMutationBody = BodyType<ExplainClauseBody>;
+export type ExplainClauseMutationError = ErrorType<void>;
+
+/**
+ * @summary Get AI plain-English explanation of a document clause
+ */
+export const useExplainClause = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof explainClause>>,
+    TError,
+    { id: number; data: BodyType<ExplainClauseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof explainClause>>,
+  TError,
+  { id: number; data: BodyType<ExplainClauseBody> },
+  TContext
+> => {
+  return useMutation(getExplainClauseMutationOptions(options));
+};
+
+/**
  * @summary List user's contract reviews
  */
 export const getListReviewsUrl = () => {
@@ -768,6 +861,583 @@ export const useDeleteReview = <
   TContext
 > => {
   return useMutation(getDeleteReviewMutationOptions(options));
+};
+
+/**
+ * @summary List user's document comparisons
+ */
+export const getListComparisonsUrl = () => {
+  return `/api/comparisons`;
+};
+
+export const listComparisons = async (
+  options?: RequestInit,
+): Promise<Comparison[]> => {
+  return customFetch<Comparison[]>(getListComparisonsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListComparisonsQueryKey = () => {
+  return [`/api/comparisons`] as const;
+};
+
+export const getListComparisonsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listComparisons>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listComparisons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListComparisonsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listComparisons>>> = ({
+    signal,
+  }) => listComparisons({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listComparisons>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListComparisonsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listComparisons>>
+>;
+export type ListComparisonsQueryError = ErrorType<void>;
+
+/**
+ * @summary List user's document comparisons
+ */
+
+export function useListComparisons<
+  TData = Awaited<ReturnType<typeof listComparisons>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listComparisons>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListComparisonsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Compare two contracts using AI
+ */
+export const getCreateComparisonUrl = () => {
+  return `/api/comparisons`;
+};
+
+export const createComparison = async (
+  createComparisonBody: CreateComparisonBody,
+  options?: RequestInit,
+): Promise<Comparison> => {
+  return customFetch<Comparison>(getCreateComparisonUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createComparisonBody),
+  });
+};
+
+export const getCreateComparisonMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createComparison>>,
+    TError,
+    { data: BodyType<CreateComparisonBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createComparison>>,
+  TError,
+  { data: BodyType<CreateComparisonBody> },
+  TContext
+> => {
+  const mutationKey = ["createComparison"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createComparison>>,
+    { data: BodyType<CreateComparisonBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createComparison(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateComparisonMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createComparison>>
+>;
+export type CreateComparisonMutationBody = BodyType<CreateComparisonBody>;
+export type CreateComparisonMutationError = ErrorType<void>;
+
+/**
+ * @summary Compare two contracts using AI
+ */
+export const useCreateComparison = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createComparison>>,
+    TError,
+    { data: BodyType<CreateComparisonBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createComparison>>,
+  TError,
+  { data: BodyType<CreateComparisonBody> },
+  TContext
+> => {
+  return useMutation(getCreateComparisonMutationOptions(options));
+};
+
+/**
+ * @summary Get a single comparison
+ */
+export const getGetComparisonUrl = (id: number) => {
+  return `/api/comparisons/${id}`;
+};
+
+export const getComparison = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Comparison> => {
+  return customFetch<Comparison>(getGetComparisonUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetComparisonQueryKey = (id: number) => {
+  return [`/api/comparisons/${id}`] as const;
+};
+
+export const getGetComparisonQueryOptions = <
+  TData = Awaited<ReturnType<typeof getComparison>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getComparison>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetComparisonQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getComparison>>> = ({
+    signal,
+  }) => getComparison(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getComparison>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetComparisonQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getComparison>>
+>;
+export type GetComparisonQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a single comparison
+ */
+
+export function useGetComparison<
+  TData = Awaited<ReturnType<typeof getComparison>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getComparison>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetComparisonQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete a comparison
+ */
+export const getDeleteComparisonUrl = (id: number) => {
+  return `/api/comparisons/${id}`;
+};
+
+export const deleteComparison = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteComparisonUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteComparisonMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteComparison>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteComparison>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteComparison"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteComparison>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteComparison(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteComparisonMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteComparison>>
+>;
+
+export type DeleteComparisonMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete a comparison
+ */
+export const useDeleteComparison = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteComparison>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteComparison>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteComparisonMutationOptions(options));
+};
+
+/**
+ * @summary List user's document templates
+ */
+export const getListTemplatesUrl = () => {
+  return `/api/templates`;
+};
+
+export const listTemplates = async (
+  options?: RequestInit,
+): Promise<Template[]> => {
+  return customFetch<Template[]>(getListTemplatesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTemplatesQueryKey = () => {
+  return [`/api/templates`] as const;
+};
+
+export const getListTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTemplates>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTemplates>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTemplatesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTemplates>>> = ({
+    signal,
+  }) => listTemplates({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTemplates>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTemplatesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTemplates>>
+>;
+export type ListTemplatesQueryError = ErrorType<void>;
+
+/**
+ * @summary List user's document templates
+ */
+
+export function useListTemplates<
+  TData = Awaited<ReturnType<typeof listTemplates>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listTemplates>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTemplatesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Save a document template
+ */
+export const getCreateTemplateUrl = () => {
+  return `/api/templates`;
+};
+
+export const createTemplate = async (
+  createTemplateBody: CreateTemplateBody,
+  options?: RequestInit,
+): Promise<Template> => {
+  return customFetch<Template>(getCreateTemplateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createTemplateBody),
+  });
+};
+
+export const getCreateTemplateMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTemplate>>,
+    TError,
+    { data: BodyType<CreateTemplateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTemplate>>,
+  TError,
+  { data: BodyType<CreateTemplateBody> },
+  TContext
+> => {
+  const mutationKey = ["createTemplate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTemplate>>,
+    { data: BodyType<CreateTemplateBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTemplate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTemplateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTemplate>>
+>;
+export type CreateTemplateMutationBody = BodyType<CreateTemplateBody>;
+export type CreateTemplateMutationError = ErrorType<void>;
+
+/**
+ * @summary Save a document template
+ */
+export const useCreateTemplate = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTemplate>>,
+    TError,
+    { data: BodyType<CreateTemplateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTemplate>>,
+  TError,
+  { data: BodyType<CreateTemplateBody> },
+  TContext
+> => {
+  return useMutation(getCreateTemplateMutationOptions(options));
+};
+
+/**
+ * @summary Delete a template
+ */
+export const getDeleteTemplateUrl = (id: number) => {
+  return `/api/templates/${id}`;
+};
+
+export const deleteTemplate = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteTemplateUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteTemplateMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTemplate>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteTemplate>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteTemplate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteTemplate>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteTemplate(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteTemplateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteTemplate>>
+>;
+
+export type DeleteTemplateMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete a template
+ */
+export const useDeleteTemplate = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteTemplate>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteTemplate>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteTemplateMutationOptions(options));
 };
 
 /**

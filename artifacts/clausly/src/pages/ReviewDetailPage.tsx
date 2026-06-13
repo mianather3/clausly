@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useGetReview } from "@workspace/api-client-react";
+import { useGetReview, getGetReviewQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@clerk/react";
 import {
   ArrowLeft, AlertTriangle, CheckCircle, FileSearch, ChevronDown, ChevronUp,
@@ -75,7 +75,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
   const { getToken } = useAuth();
   const reviewId = parseInt(id, 10);
   const { data: review, isLoading, error } = useGetReview(reviewId, {
-    query: { enabled: !!reviewId && !isNaN(reviewId) },
+    query: { enabled: !!reviewId && !isNaN(reviewId), queryKey: getGetReviewQueryKey(reviewId) },
   });
 
   const [shareToken, setShareToken] = useState<string | null>(null);

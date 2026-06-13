@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
-import { useCreateDocument, getListDocumentsQueryKey } from "@workspace/api-client-react";
-import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle } from "lucide-react";
+import { useCreateDocument, getListDocumentsQueryKey, useListTemplates, useCreateTemplate, getListTemplatesQueryKey } from "@workspace/api-client-react";
+import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle, BookMarked, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,13 @@ export default function GeneratePage() {
   });
   const [generatedDoc, setGeneratedDoc] = useState<{ id: number; content: string; title: string } | null>(null);
 
+  // Template state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  const { data: templates } = useListTemplates();
+
   const mutation = useCreateDocument({
     mutation: {
       onSuccess: (data) => {
@@ -44,6 +51,20 @@ export default function GeneratePage() {
       },
       onError: () => {
         toast({ title: "Failed to generate document.", variant: "destructive" });
+      },
+    },
+  });
+
+  const templateMutation = useCreateTemplate({
+    mutation: {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: getListTemplatesQueryKey() });
+        setShowSaveModal(false);
+        setTemplateName("");
+        toast({ title: `Template "${data.name}" saved.` });
+      },
+      onError: () => {
+        toast({ title: "Failed to save template.", variant: "destructive" });
       },
     },
   });
@@ -67,6 +88,36 @@ export default function GeneratePage() {
     });
   };
 
+  const handleSaveTemplate = () => {
+    if (!templateName.trim() || !form.documentType || !form.partyA || !form.keyTerms) return;
+    setSavingTemplate(true);
+    templateMutation.mutate({
+      data: {
+        name: templateName.trim(),
+        documentType: form.documentType as any,
+        partyA: form.partyA,
+        jurisdiction: form.jurisdiction || undefined,
+        keyTerms: form.keyTerms,
+        additionalContext: form.additionalContext || undefined,
+      },
+    });
+    setSavingTemplate(false);
+  };
+
+  const loadTemplate = (id: string) => {
+    const t = templates?.find((t) => t.id === parseInt(id, 10));
+    if (!t) return;
+    setForm({
+      documentType: t.documentType,
+      partyA: t.partyA,
+      partyB: "",
+      keyTerms: t.keyTerms,
+      jurisdiction: t.jurisdiction ?? "",
+      additionalContext: t.additionalContext ?? "",
+    });
+    toast({ title: `Template "${t.name}" loaded.` });
+  };
+
   const handleCopy = () => {
     if (generatedDoc) {
       navigator.clipboard.writeText(generatedDoc.content);
@@ -83,10 +134,7 @@ export default function GeneratePage() {
       const token = await getToken();
       const response = await fetch(`/api/documents/download-docx`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: generatedDoc.title, content: generatedDoc.content }),
       });
       if (!response.ok) {
@@ -94,28 +142,18 @@ export default function GeneratePage() {
         throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
       }
       const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("wordprocessingml")) {
-        throw new Error(`Expected .docx but got ${contentType}`);
-      }
+      if (!contentType.includes("wordprocessingml")) throw new Error(`Expected .docx but got ${contentType}`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `${generatedDoc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_") || "document"}.docx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast({ title: "Word document downloaded." });
     } catch (err) {
-      toast({
-        title: "Failed to download Word document.",
-        description: err instanceof Error ? err.message : undefined,
-        variant: "destructive",
-      });
-    } finally {
-      setDownloadingDocx(false);
-    }
+      toast({ title: "Failed to download Word document.", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+    } finally { setDownloadingDocx(false); }
   };
 
   const handleDownloadPdf = async () => {
@@ -125,10 +163,7 @@ export default function GeneratePage() {
       const token = await getToken();
       const response = await fetch(`/api/documents/download-pdf`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: generatedDoc.title, content: generatedDoc.content }),
       });
       if (!response.ok) {
@@ -136,32 +171,68 @@ export default function GeneratePage() {
         throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
       }
       const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("pdf")) {
-        throw new Error(`Expected PDF but got ${contentType}`);
-      }
+      if (!contentType.includes("pdf")) throw new Error(`Expected PDF but got ${contentType}`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `${generatedDoc.title.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "_") || "document"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast({ title: "PDF downloaded." });
     } catch (err) {
-      toast({
-        title: "Failed to download PDF.",
-        description: err instanceof Error ? err.message : undefined,
-        variant: "destructive",
-      });
-    } finally {
-      setDownloadingPdf(false);
-    }
+      toast({ title: "Failed to download PDF.", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+    } finally { setDownloadingPdf(false); }
   };
 
   return (
     <div className="max-w-4xl space-y-6">
+      {/* Save as Template modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <Card className="bg-card border-border w-full max-w-md mx-4 shadow-2xl">
+            <CardHeader className="flex flex-row items-start justify-between pb-3">
+              <div>
+                <CardTitle className="text-white text-base font-semibold flex items-center gap-2">
+                  <BookMarked className="h-4 w-4 text-primary" />
+                  Save as Template
+                </CardTitle>
+                <p className="text-muted-foreground text-sm mt-1">Saves your current form settings for reuse later.</p>
+              </div>
+              <button onClick={() => setShowSaveModal(false)} className="text-muted-foreground hover:text-white mt-0.5">
+                <X className="h-4 w-4" />
+              </button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-white text-sm font-medium">Template Name *</Label>
+                <Input
+                  placeholder="e.g., Standard Vendor NDA"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="bg-background border-border text-white placeholder:text-muted-foreground"
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && templateName.trim() && handleSaveTemplate()}
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSaveTemplate}
+                  disabled={!templateName.trim() || savingTemplate || templateMutation.isPending}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold flex-1"
+                >
+                  {templateMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookMarked className="mr-2 h-4 w-4" />}
+                  Save Template
+                </Button>
+                <Button variant="outline" onClick={() => setShowSaveModal(false)} className="border-border text-white hover:bg-secondary">
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-serif font-bold text-white">Generate a Legal Document</h1>
         <p className="text-muted-foreground mt-1">Fill in the details below and let AI draft your document.</p>
@@ -183,6 +254,27 @@ export default function GeneratePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Load template row */}
+              {templates && templates.length > 0 && (
+                <div className="flex items-center gap-3 pb-4 border-b border-border">
+                  <BookMarked className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="flex-1">
+                    <Select onValueChange={loadTemplate}>
+                      <SelectTrigger className="bg-background border-border text-white h-9">
+                        <SelectValue placeholder="Load a saved template..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {templates.map((t) => (
+                          <SelectItem key={t.id} value={String(t.id)} className="text-white focus:bg-secondary focus:text-white">
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label className="text-white text-sm font-medium">Document Type *</Label>
                 <Select value={form.documentType} onValueChange={(val) => setForm((p) => ({ ...p, documentType: val }))}>
@@ -257,16 +349,21 @@ export default function GeneratePage() {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-5 h-auto"
               >
                 {mutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating document...
-                  </>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating document...</>
                 ) : (
-                  <>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Generate Document
-                  </>
+                  <><FileText className="mr-2 h-4 w-4" />Generate Document</>
                 )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={!form.documentType || !form.partyA || !form.keyTerms}
+                onClick={() => setShowSaveModal(true)}
+                className="w-full text-muted-foreground hover:text-white gap-2"
+              >
+                <BookMarked className="h-4 w-4" />
+                Save form as Template
               </Button>
             </form>
           </CardContent>
@@ -314,13 +411,23 @@ export default function GeneratePage() {
               </div>
             </CardContent>
           </Card>
-          <Button
-            onClick={() => { setGeneratedDoc(null); setForm({ documentType: "", partyA: "", partyB: "", keyTerms: "", jurisdiction: "", additionalContext: "" }); }}
-            variant="outline"
-            className="border-border text-white hover:bg-secondary"
-          >
-            Generate Another Document
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => { setGeneratedDoc(null); setForm({ documentType: "", partyA: "", partyB: "", keyTerms: "", jurisdiction: "", additionalContext: "" }); }}
+              variant="outline"
+              className="border-border text-white hover:bg-secondary"
+            >
+              Generate Another Document
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowSaveModal(true)}
+              className="text-muted-foreground hover:text-white gap-2"
+            >
+              <BookMarked className="h-4 w-4" />
+              Save as Template
+            </Button>
+          </div>
         </div>
       )}
     </div>

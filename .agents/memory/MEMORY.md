@@ -1,2 +1,4 @@
 - [Express 5 params typing](express5-params.md) — req.params values are string | string[], always cast with `as string` in new routes
 - [DB push interactive workaround](db-push-workaround.md) — drizzle-kit push blocks on TTY prompts; bypass by running CREATE TABLE IF NOT EXISTS via node with lib/db/node_modules/pg Pool
+- [api-zod sub-path pattern](api-zod-subpath.md) — Zod schemas must be imported from `@workspace/api-zod/schemas`; the index exports only TypeScript types to avoid TS2308.
+- [api-client-react queryKey](api-client-react-querykey.md) — Orval v8 react-query hooks require explicit `queryKey` in the query options object; use the generated `getGet<X>QueryKey()` helper.

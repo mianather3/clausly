@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useGetDashboardStats, useGetRecentActivity } from "@workspace/api-client-react";
-import { FileText, FileSearch, TrendingUp, BarChart3, ArrowRight, Clock } from "lucide-react";
+import { FileText, FileSearch, TrendingUp, BookMarked, ArrowRight, Clock, GitCompare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,13 +92,13 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Doc Types Used</p>
+                    <p className="text-sm text-muted-foreground">Templates</p>
                     <p className="text-3xl font-bold text-white mt-1">
-                      {Object.keys(stats?.documentsByType ?? {}).length}
+                      {stats?.templateCount ?? 0}
                     </p>
                   </div>
                   <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-primary" />
+                    <BookMarked className="h-5 w-5 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <Link href="/generate">
           <Card className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer group">
             <CardContent className="pt-6">
@@ -135,6 +135,22 @@ export default function DashboardPage() {
                     <h3 className="font-semibold text-white">Review a Contract</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">Paste contract text and get AI risk analysis with flagged clauses.</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-4" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/compare">
+          <Card className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <GitCompare className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-white">Compare Contracts</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Paste two contracts side-by-side for an AI-powered difference analysis.</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-4" />
               </div>

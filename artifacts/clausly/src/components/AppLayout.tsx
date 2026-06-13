@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useClerk, useUser } from "@clerk/react";
-import { Scale, FileText, FileSearch, History, LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
+import { Scale, FileText, FileSearch, History, LayoutDashboard, LogOut, ShieldCheck, GitCompare, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -58,6 +58,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <Link href="/review" className="flex items-center">
                         <FileSearch className="mr-2 h-4 w-4" />
                         <span>Review Contract</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location === "/compare"}>
+                      <Link href="/compare" className="flex items-center">
+                        <GitCompare className="mr-2 h-4 w-4" />
+                        <span>Compare Contracts</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -122,6 +130,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <span className="text-xs text-muted-foreground truncate">{user?.primaryEmailAddress?.emailAddress}</span>
               </div>
             </div>
+            <Link href="/pricing" className="block mb-2">
+              <Button variant="outline" className="w-full justify-start text-primary border-primary/30 hover:bg-primary/10 hover:text-primary">
+                <Zap className="mr-2 h-4 w-4" />
+                Upgrade to Pro
+              </Button>
+            </Link>
             <Button variant="outline" className="w-full justify-start text-muted-foreground hover:text-white" onClick={() => signOut()}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out

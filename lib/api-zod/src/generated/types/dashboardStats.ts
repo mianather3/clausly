@@ -10,6 +10,7 @@ import type { DashboardStatsDocumentsByType } from "./dashboardStatsDocumentsByT
 export interface DashboardStats {
   totalDocuments: number;
   totalReviews: number;
+  templateCount: number;
   documentsByType: DashboardStatsDocumentsByType;
   /** @nullable */
   avgRiskScore: number | null;

@@ -1,0 +1,17 @@
+Add four features to Clausly:
+1. AI CLAUSE EXPLAINER:
+
+On the document detail page, make each section of the generated document clickable. When a user clicks any paragraph or clause, show a side panel or modal with an AI-generated plain-English explanation of what that clause means, why it matters, and whether it favors one party. Use the OpenAI API for this. Cache the explanation in the session so clicking the same clause twice doesn't make a second API call.
+2. DOCUMENT COMPARISON:
+
+Add a new page at /compare accessible from the dashboard and sidebar navigation. User pastes two contracts into two text areas or uploads two files. On clicking Compare, send both to OpenAI and return: a summary of key differences, which clauses appear in one but not the other, and an overall assessment of which version is more favorable to which party. Display results in a clean side-by-side layout. Save comparisons to a 'comparisons' table with: id, user_id, title, contract_a_text, contract_b_text, result_json, created_at. Show comparisons in history sidebar.
+3. DOCUMENT TEMPLATES:
+
+Add a 'Save as Template' button on the document generation page. After filling in document type, party A, jurisdiction, and key terms — user can save those inputs as a named template. Store in a 'templates' table with: id, user_id, name, document_type, party_a, jurisdiction, key_terms, additional_context, created_at. On the Generate Document page add a 'Load Template' dropdown at the top that pre-fills all fields. Show template count on dashboard stats row.
+4. PRICING PAGE:
+
+Add a public pricing page at /pricing accessible from the landing page navigation and a 'Upgrade' button on the dashboard. The page should show two tiers in a clean card layout matching the existing navy and gold color scheme:
+Free tier — $0/month: 3 documents per month, 3 contract reviews per month, basic document types (NDA, contractor agreement, privacy policy, terms of service), PDF and Word download, email support.
+Pro tier — $49/month (highlight this as recommended): Unlimited documents, unlimited contract reviews, all document types, PDF and Word download, Send for Signature, AI Clause Explainer, Document Comparison, Document Templates, priority support, early access to new features.
+Each card has a CTA button — Free says 'Get Started' linking to /sign-up, Pro says 'Upgrade to Pro' which for now shows a toast message saying 'Payment processing coming soon — we will notify you when Pro launches.' Add a FAQ section below the cards covering: is my data secure, do I need a credit card for free, can I cancel anytime, is this a substitute for legal advice.
+Throughout all features maintain the existing navy and gold color scheme, shadcn/ui components, and existing dashboard layout. All new database tables use the same Neon PostgreSQL connection. All new routes use the existing requireAuth middleware except the public pricing page. Test each feature end to end before considering complete.

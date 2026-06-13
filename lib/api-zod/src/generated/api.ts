@@ -86,6 +86,23 @@ export const DeleteDocumentParams = zod.object({
 });
 
 /**
+ * @summary Get AI plain-English explanation of a document clause
+ */
+export const ExplainClauseParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ExplainClauseBody = zod.object({
+  clauseText: zod.string(),
+});
+
+export const ExplainClauseResponse = zod.object({
+  explanation: zod.string(),
+  whyItMatters: zod.string(),
+  favoredParty: zod.string(),
+});
+
+/**
  * @summary List user's contract reviews
  */
 export const ListReviewsResponseItem = zod.object({
@@ -136,11 +153,110 @@ export const DeleteReviewParams = zod.object({
 });
 
 /**
+ * @summary List user's document comparisons
+ */
+export const ListComparisonsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  title: zod.string(),
+  contractAText: zod.string(),
+  contractBText: zod.string(),
+  differencesJson: zod.string().nullable(),
+  missingClausesJson: zod.string().nullable(),
+  assessmentJson: zod.string().nullable(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListComparisonsResponse = zod.array(ListComparisonsResponseItem);
+
+/**
+ * @summary Compare two contracts using AI
+ */
+export const CreateComparisonBody = zod.object({
+  title: zod.string(),
+  contractAText: zod.string(),
+  contractBText: zod.string(),
+});
+
+/**
+ * @summary Get a single comparison
+ */
+export const GetComparisonParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetComparisonResponse = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  title: zod.string(),
+  contractAText: zod.string(),
+  contractBText: zod.string(),
+  differencesJson: zod.string().nullable(),
+  missingClausesJson: zod.string().nullable(),
+  assessmentJson: zod.string().nullable(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a comparison
+ */
+export const DeleteComparisonParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List user's document templates
+ */
+export const ListTemplatesResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  name: zod.string(),
+  documentType: zod.enum([
+    "nda",
+    "privacy_policy",
+    "contractor_agreement",
+    "terms_of_service",
+  ]),
+  partyA: zod.string(),
+  jurisdiction: zod.string().nullable(),
+  keyTerms: zod.string(),
+  additionalContext: zod.string().nullable(),
+  createdAt: zod.coerce.date(),
+});
+export const ListTemplatesResponse = zod.array(ListTemplatesResponseItem);
+
+/**
+ * @summary Save a document template
+ */
+export const CreateTemplateBody = zod.object({
+  name: zod.string(),
+  documentType: zod.enum([
+    "nda",
+    "privacy_policy",
+    "contractor_agreement",
+    "terms_of_service",
+  ]),
+  partyA: zod.string(),
+  jurisdiction: zod.string().optional(),
+  keyTerms: zod.string(),
+  additionalContext: zod.string().optional(),
+});
+
+/**
+ * @summary Delete a template
+ */
+export const DeleteTemplateParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Get dashboard summary stats
  */
 export const GetDashboardStatsResponse = zod.object({
   totalDocuments: zod.number(),
   totalReviews: zod.number(),
+  templateCount: zod.number(),
   documentsByType: zod.record(zod.string(), zod.number()),
   avgRiskScore: zod.number().nullable(),
 });

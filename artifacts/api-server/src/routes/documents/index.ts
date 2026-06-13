@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, documentsTable } from "@workspace/db";
-import { CreateDocumentBody, GetDocumentParams, DeleteDocumentParams, ListDocumentsResponse, GetDocumentResponse } from "@workspace/api-zod";
+import { CreateDocumentBody, GetDocumentParams, DeleteDocumentParams, ListDocumentsResponse, GetDocumentResponse } from "@workspace/api-zod/schemas";
 import { requireAuth } from "../../middlewares/requireAuth";
 import { openai } from "../../lib/openai";
 import {
@@ -836,6 +836,56 @@ router.delete("/documents/:id", requireAuth, async (req, res): Promise<void> => 
   }
 
   res.sendStatus(204);
+});
+
+router.post("/documents/:id/explain-clause", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(req.params["id"] as string, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const userId = (req as any).userId as string;
+
+  const clauseText = req.body?.clauseText;
+  if (!clauseText || typeof clauseText !== "string" || clauseText.trim().length === 0) {
+    res.status(400).json({ error: "clauseText is required" });
+    return;
+  }
+
+  const [doc] = await db
+    .select({ id: documentsTable.id })
+    .from(documentsTable)
+    .where(and(eq(documentsTable.id, id), eq(documentsTable.userId, userId)));
+
+  if (!doc) { res.status(404).json({ error: "Document not found" }); return; }
+
+  const prompt = `You are a senior corporate attorney. A client is reading a legal document and has clicked on the following clause to understand it better:
+
+---
+${clauseText.trim()}
+---
+
+Provide a plain-English explanation. Return a JSON object with exactly these three keys:
+{
+  "explanation": "What this clause says in simple, plain English (2-4 sentences)",
+  "whyItMatters": "Why this clause matters and what practical effect it has (2-3 sentences)",
+  "favoredParty": "Whether this clause favors one party over the other, and which one — or if it is balanced (1-2 sentences)"
+}
+
+Return only valid JSON, no markdown.`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.2,
+    response_format: { type: "json_object" },
+  });
+
+  const raw = response.choices[0]?.message?.content ?? "{}";
+  const parsed = JSON.parse(raw);
+
+  res.json({
+    explanation: parsed.explanation ?? "",
+    whyItMatters: parsed.whyItMatters ?? "",
+    favoredParty: parsed.favoredParty ?? "",
+  });
 });
 
 export default router;

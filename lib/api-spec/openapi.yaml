@@ -16,6 +16,10 @@ tags:
     description: Contract review operations
   - name: dashboard
     description: Dashboard operations
+  - name: comparisons
+    description: Document comparison operations
+  - name: templates
+    description: Document template operations
 paths:
   /healthz:
     get:
@@ -108,6 +112,37 @@ paths:
         "404":
           description: Not found
 
+  /documents/{id}/explain-clause:
+    post:
+      operationId: explainClause
+      tags: [documents]
+      summary: Get AI plain-English explanation of a document clause
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExplainClauseBody"
+      responses:
+        "200":
+          description: Clause explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExplainClauseResponse"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
   /reviews:
     get:
       operationId: listReviews
@@ -172,6 +207,141 @@ paths:
       operationId: deleteReview
       tags: [reviews]
       summary: Delete a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /comparisons:
+    get:
+      operationId: listComparisons
+      tags: [comparisons]
+      summary: List user's document comparisons
+      responses:
+        "200":
+          description: List of comparisons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comparison"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createComparison
+      tags: [comparisons]
+      summary: Compare two contracts using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateComparisonBody"
+      responses:
+        "201":
+          description: Created comparison
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comparison"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+
+  /comparisons/{id}:
+    get:
+      operationId: getComparison
+      tags: [comparisons]
+      summary: Get a single comparison
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comparison
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comparison"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteComparison
+      tags: [comparisons]
+      summary: Delete a comparison
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /templates:
+    get:
+      operationId: listTemplates
+      tags: [templates]
+      summary: List user's document templates
+      responses:
+        "200":
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Template"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createTemplate
+      tags: [templates]
+      summary: Save a document template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateBody"
+      responses:
+        "201":
+          description: Created template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+
+  /templates/{id}:
+    delete:
+      operationId: deleteTemplate
+      tags: [templates]
+      summary: Delete a template
       parameters:
         - name: id
           in: path
@@ -285,6 +455,28 @@ components:
         - partyA
         - keyTerms
 
+    ExplainClauseBody:
+      type: object
+      properties:
+        clauseText:
+          type: string
+      required:
+        - clauseText
+
+    ExplainClauseResponse:
+      type: object
+      properties:
+        explanation:
+          type: string
+        whyItMatters:
+          type: string
+        favoredParty:
+          type: string
+      required:
+        - explanation
+        - whyItMatters
+        - favoredParty
+
     Review:
       type: object
       properties:
@@ -330,12 +522,121 @@ components:
         - contractText
         - title
 
+    Comparison:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        title:
+          type: string
+        contractAText:
+          type: string
+        contractBText:
+          type: string
+        differencesJson:
+          type: ["string", "null"]
+        missingClausesJson:
+          type: ["string", "null"]
+        assessmentJson:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - contractAText
+        - contractBText
+        - differencesJson
+        - missingClausesJson
+        - assessmentJson
+        - createdAt
+        - updatedAt
+
+    CreateComparisonBody:
+      type: object
+      properties:
+        title:
+          type: string
+        contractAText:
+          type: string
+        contractBText:
+          type: string
+      required:
+        - title
+        - contractAText
+        - contractBText
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        name:
+          type: string
+        documentType:
+          type: string
+          enum: [nda, privacy_policy, contractor_agreement, terms_of_service]
+        partyA:
+          type: string
+        jurisdiction:
+          type: ["string", "null"]
+        keyTerms:
+          type: string
+        additionalContext:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - name
+        - documentType
+        - partyA
+        - jurisdiction
+        - keyTerms
+        - additionalContext
+        - createdAt
+
+    CreateTemplateBody:
+      type: object
+      properties:
+        name:
+          type: string
+        documentType:
+          type: string
+          enum: [nda, privacy_policy, contractor_agreement, terms_of_service]
+        partyA:
+          type: string
+        jurisdiction:
+          type: string
+        keyTerms:
+          type: string
+        additionalContext:
+          type: string
+      required:
+        - name
+        - documentType
+        - partyA
+        - keyTerms
+
     DashboardStats:
       type: object
       properties:
         totalDocuments:
           type: integer
         totalReviews:
+          type: integer
+        templateCount:
           type: integer
         documentsByType:
           type: object
@@ -346,6 +647,7 @@ components:
       required:
         - totalDocuments
         - totalReviews
+        - templateCount
         - documentsByType
         - avgRiskScore
 

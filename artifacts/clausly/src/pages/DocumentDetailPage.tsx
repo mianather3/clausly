@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
-import { useGetDocument } from "@workspace/api-client-react";
+import { useGetDocument, getGetDocumentQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@clerk/react";
 import {
   ArrowLeft, Copy, Download, CheckCircle, FileText, FileType, Loader2,
-  Send, PenLine, Clock, X,
+  Send, PenLine, Clock, X, Sparkles,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,12 @@ interface SigStatus {
   recipientSignedAt: string | null;
 }
 
+interface ClauseExplanation {
+  explanation: string;
+  whyItMatters: string;
+  favoredParty: string;
+}
+
 export default function DocumentDetailPage({ id }: { id: string }) {
   const { toast } = useToast();
   const { getToken } = useAuth();
@@ -49,9 +55,16 @@ export default function DocumentDetailPage({ id }: { id: string }) {
   const [recipientName, setRecipientName] = useState("");
   const [sendingSig, setSendingSig] = useState(false);
 
+  // Clause explainer state
+  const [selectedClause, setSelectedClause] = useState<string | null>(null);
+  const [isExplainerOpen, setIsExplainerOpen] = useState(false);
+  const [explanation, setExplanation] = useState<ClauseExplanation | null>(null);
+  const [explaining, setExplaining] = useState(false);
+  const explanationCache = useRef<Map<string, ClauseExplanation>>(new Map());
+
   const docId = parseInt(id, 10);
   const { data: doc, isLoading, error } = useGetDocument(docId, {
-    query: { enabled: !!docId && !isNaN(docId) },
+    query: { enabled: !!docId && !isNaN(docId), queryKey: getGetDocumentQueryKey(docId) },
   });
 
   const fetchSigStatus = useCallback(async () => {
@@ -73,6 +86,40 @@ export default function DocumentDetailPage({ id }: { id: string }) {
   }, [docId, getToken]);
 
   useEffect(() => { fetchSigStatus(); }, [fetchSigStatus]);
+
+  const handleClauseClick = async (clauseText: string) => {
+    const trimmed = clauseText.trim();
+    if (trimmed.length < 20) return;
+
+    setSelectedClause(clauseText);
+    setIsExplainerOpen(true);
+
+    const cached = explanationCache.current.get(clauseText);
+    if (cached) {
+      setExplanation(cached);
+      return;
+    }
+
+    setExplaining(true);
+    setExplanation(null);
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/documents/${docId}/explain-clause`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ clauseText: trimmed }),
+      });
+      if (!response.ok) throw new Error("Failed to explain clause");
+      const data: ClauseExplanation = await response.json();
+      explanationCache.current.set(clauseText, data);
+      setExplanation(data);
+    } catch {
+      toast({ title: "Failed to explain clause.", variant: "destructive" });
+      setIsExplainerOpen(false);
+    } finally {
+      setExplaining(false);
+    }
+  };
 
   const handleCopy = () => {
     if (doc) {
@@ -193,9 +240,11 @@ export default function DocumentDetailPage({ id }: { id: string }) {
     )
   );
 
+  const paragraphs = doc.content.split(/\n\n+/).filter((p) => p.trim());
+
   return (
     <div className="max-w-4xl space-y-4">
-      {/* Send for Signature modal */}
+      {/* Signature modal */}
       {showSigModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <Card className="bg-card border-border w-full max-w-md mx-4 shadow-2xl">
@@ -245,16 +294,64 @@ export default function DocumentDetailPage({ id }: { id: string }) {
                   {sendingSig ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                   {sendingSig ? "Sending..." : "Send Request"}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSigModal(false)}
-                  className="border-border text-white hover:bg-secondary"
-                >
+                <Button variant="outline" onClick={() => setShowSigModal(false)} className="border-border text-white hover:bg-secondary">
                   Cancel
                 </Button>
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* AI Clause Explainer panel */}
+      {isExplainerOpen && (
+        <div className="fixed inset-0 z-40 flex justify-end">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setIsExplainerOpen(false)} />
+          <div className="relative z-50 w-full max-w-sm h-full bg-card border-l border-border shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-white text-sm">AI Clause Explainer</span>
+              </div>
+              <button onClick={() => setIsExplainerOpen(false)} className="text-muted-foreground hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {explaining ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Analyzing clause...</p>
+                </div>
+              ) : explanation ? (
+                <>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">What this means</p>
+                    <p className="text-sm text-white leading-relaxed">{explanation.explanation}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Why it matters</p>
+                    <p className="text-sm text-white leading-relaxed">{explanation.whyItMatters}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Favorability</p>
+                    <p className="text-sm text-white leading-relaxed">{explanation.favoredParty}</p>
+                  </div>
+                  {selectedClause && (
+                    <div>
+                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Selected clause</p>
+                      <div className="bg-background border border-border rounded-sm p-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-5">{selectedClause.trim()}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+            <div className="px-4 py-3 border-t border-border flex-shrink-0">
+              <p className="text-xs text-muted-foreground text-center">Click any paragraph in the document to explain it</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -331,8 +428,26 @@ export default function DocumentDetailPage({ id }: { id: string }) {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <p className="text-xs text-muted-foreground">Click any paragraph to get an AI plain-English explanation.</p>
+          </div>
           <div className="bg-background border border-border rounded-sm p-6 max-h-[70vh] overflow-y-auto">
-            <pre className="whitespace-pre-wrap font-serif text-sm text-white leading-relaxed">{doc.content}</pre>
+            <div className="space-y-4 font-serif text-sm text-white leading-relaxed">
+              {paragraphs.map((paragraph, i) => (
+                <div
+                  key={i}
+                  onClick={() => handleClauseClick(paragraph)}
+                  className={`cursor-pointer rounded-sm px-3 py-2 transition-all border-l-2 ${
+                    selectedClause === paragraph
+                      ? "bg-primary/10 border-primary"
+                      : "border-transparent hover:bg-secondary/30 hover:border-primary/30"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{paragraph}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -6,13 +6,21 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./comparison";
+export * from "./createComparisonBody";
 export * from "./createDocumentBody";
 export * from "./createDocumentBodyDocumentType";
 export * from "./createReviewBody";
+export * from "./createTemplateBody";
+export * from "./createTemplateBodyDocumentType";
 export * from "./dashboardStats";
 export * from "./dashboardStatsDocumentsByType";
 export * from "./document";
 export * from "./documentDocumentType";
+export * from "./explainClauseBody";
+export * from "./explainClauseResponse";
 export * from "./healthStatus";
 export * from "./recentActivity";
 export * from "./review";
+export * from "./template";
+export * from "./templateDocumentType";
