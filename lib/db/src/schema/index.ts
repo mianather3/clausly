@@ -4,3 +4,4 @@ export * from "./signature_requests";
 export * from "./shared_reviews";
 export * from "./comparisons";
 export * from "./templates";
+export * from "./playing_with_neon";
