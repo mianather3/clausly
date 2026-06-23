@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "http://clausly-api-prod.eba-8zaefrcp.us-west-2.elasticbeanstalk.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

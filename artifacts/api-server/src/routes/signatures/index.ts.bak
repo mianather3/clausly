@@ -8,7 +8,9 @@ import { Resend } from "resend";
 const router: IRouter = Router();
 
 function getAppUrl(): string {
-  return process.env.APP_URL || "https://clausly.net";
+  const domains = process.env.REPLIT_DOMAINS;
+  if (domains) return `https://${domains.split(",")[0].trim()}`;
+  return process.env.APP_URL || "http://localhost:80";
 }
 
 async function sendMail(to: string, subject: string, html: string) {
@@ -38,6 +40,7 @@ router.post("/documents/:id/request-signature", requireAuth, async (req: Request
   const [doc] = await db.select().from(documentsTable).where(eq(documentsTable.id, docId));
   if (!doc || doc.userId !== userId) { res.status(404).json({ error: "Document not found" }); return; }
 
+  // Check for existing pending request
   const existing = await db.select().from(signatureRequestsTable)
     .where(eq(signatureRequestsTable.documentId, docId));
   const pending = existing.find(r => r.status === "pending");
@@ -56,32 +59,28 @@ router.post("/documents/:id/request-signature", requireAuth, async (req: Request
   const appUrl = getAppUrl();
   const signLink = `${appUrl}/sign/${token}`;
 
-  try {
-    await sendMail(
-      recipientEmail,
-      `Please sign: ${doc.title}`,
-      `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:24px">
-        <h2 style="color:#1a2744">You have a document to sign</h2>
-        <p>You have been invited to review and sign the following document:</p>
-        <p style="font-weight:bold;font-size:1.1em">${doc.title}</p>
-        <p>Click the button below to view and sign the document. No account required.</p>
-        <a href="${signLink}" style="display:inline-block;background:#b8962e;color:#fff;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;margin:16px 0">
-          View &amp; Sign Document
-        </a>
-        <p style="font-size:0.85em;color:#666">Or copy this link: ${signLink}</p>
-        <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
-        <p style="font-size:0.8em;color:#999">Powered by Clausly — clausly.net</p>
-      </div>`
-    );
-  } catch (emailErr) {
-    console.error("[Signature] Email failed but continuing:", emailErr);
-  }
+  await sendMail(
+    recipientEmail,
+    `Please sign: ${doc.title}`,
+    `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:24px">
+      <h2 style="color:#1a2744">You have a document to sign</h2>
+      <p>You have been invited to review and sign the following document:</p>
+      <p style="font-weight:bold;font-size:1.1em">${doc.title}</p>
+      <p>Click the button below to view and sign the document. No account required.</p>
+      <a href="${signLink}" style="display:inline-block;background:#b8962e;color:#fff;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;margin:16px 0">
+        View &amp; Sign Document
+      </a>
+      <p style="font-size:0.85em;color:#666">Or copy this link: ${signLink}</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+      <p style="font-size:0.8em;color:#999">Powered by Clausly — clausly.net</p>
+    </div>`
+  );
 
   req.log.info({ docId, recipientEmail, token }, "Signature request created");
   res.status(201).json({ id: sigReq.id, status: sigReq.status, uniqueToken: sigReq.uniqueToken });
 });
 
-// GET /api/documents/:id/signature-status — authenticated
+// GET /api/documents/:id/signature-status — authenticated, returns latest request for this doc
 router.get("/documents/:id/signature-status", requireAuth, async (req: Request, res: Response): Promise<void> => {
   const docId = parseInt(req.params.id as string, 10);
   if (isNaN(docId)) { res.status(400).json({ error: "Invalid id" }); return; }
@@ -147,22 +146,21 @@ router.post("/sign/:token", async (req: Request, res: Response): Promise<void> =
 
   const appUrl = getAppUrl();
 
-  try {
-    await sendMail(
-      sigReq.recipientEmail,
-      `You signed: ${doc.title}`,
-      `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:24px">
-        <h2 style="color:#1a2744">Document signed successfully</h2>
-        <p>Hi ${fullName},</p>
-        <p>You have successfully signed <strong>${doc.title}</strong> on ${now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.</p>
-        <p>Your typed signature: <em>${fullName}</em></p>
-        <p style="font-size:0.8em;color:#999">Powered by Clausly — clausly.net</p>
-      </div>`
-    );
-  } catch (emailErr) {
-    console.error("[Sign] Confirmation email failed:", emailErr);
-  }
+  // Confirmation to recipient
+  await sendMail(
+    sigReq.recipientEmail,
+    `You signed: ${doc.title}`,
+    `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:24px">
+      <h2 style="color:#1a2744">Document signed successfully</h2>
+      <p>Hi ${fullName},</p>
+      <p>You have successfully signed <strong>${doc.title}</strong> on ${now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.</p>
+      <p>Your typed signature: <em>${fullName}</em></p>
+      <p style="font-size:0.8em;color:#999">Powered by Clausly — clausly.net</p>
+    </div>`
+  );
 
+  // Notify sender — look up any user email we have (best-effort)
+  // We don't store sender email in DB, so just log for now
   req.log.info({ docId: doc.id, signer: fullName }, "Document signed by recipient");
   void appUrl;
 
