@@ -1,16 +1,10 @@
 <div align="center">
 
-<img src="https://clausly.net/favicon.ico" width="60" alt="Clausly logo" />
-
 # Clausly
 
 **AI-powered legal documents for people who can't afford a lawyer.**
 
 Generate attorney-quality NDAs, contractor agreements, privacy policies, and terms of service in seconds — then review any contract for risk with clause-by-clause AI analysis.
-
-[![Live](https://img.shields.io/badge/live-clausly.net-b8962e?style=flat-square)](https://clausly.net)
-[![Status](https://img.shields.io/badge/status-production-22c55e?style=flat-square)]()
-[![Stack](https://img.shields.io/badge/stack-React%20%2B%20Express%20%2B%20GPT--4o-1a2744?style=flat-square)]()
 
 </div>
 
@@ -230,7 +224,7 @@ Clausly generates documents for informational purposes only. Nothing on this pla
 
 <div align="center">
 
-Built by [Mian Ather](https://github.com/mianather3) · University of Utah Honors College · CS/DS '27
+Built by [Mian Ather Ali](https://github.com/mianather3) · University of Utah Honors College · CS/DS '27
 
 [clausly.net](https://clausly.net) · [Pricing](https://clausly.net/pricing)
 
