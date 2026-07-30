@@ -1,15 +1,28 @@
 import { Link } from "wouter";
-import { Scale, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Scale, Check, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 const FREE_FEATURES = [
-  "3 documents per month",
-  "3 contract reviews per month",
-  "Basic document types (NDA, Contractor Agreement, Privacy Policy, Terms of Service)",
+  "1 document per month",
+  "1 contract review per month",
+  "AI risk scoring & flagged clauses",
+  "AI Clause Explainer",
+  "PDF and Word download",
+  "Email support",
+];
+
+const STARTER_FEATURES = [
+  "10 documents per month",
+  "10 contract reviews per month",
+  "All document types",
+  "AI risk scoring & flagged clauses",
+  "AI Clause Explainer",
+  "5 e-signatures per month",
+  "Save up to 5 templates",
   "PDF and Word download",
   "Email support",
 ];
@@ -18,11 +31,12 @@ const PRO_FEATURES = [
   "Unlimited documents",
   "Unlimited contract reviews",
   "All document types",
-  "PDF and Word download",
-  "Send for Signature",
+  "AI risk scoring & flagged clauses",
   "AI Clause Explainer",
-  "Document Comparison",
-  "Document Templates",
+  "Unlimited e-signatures",
+  "Side-by-side contract comparison",
+  "Unlimited document templates",
+  "PDF and Word download (no watermark)",
   "Priority support",
   "Early access to new features",
 ];
@@ -36,12 +50,17 @@ const FAQS = [
   {
     question: "Do I need a credit card for the free plan?",
     answer:
-      "No. You can sign up and start using the free tier immediately — no credit card required. You only need to provide payment details when upgrading to Pro.",
+      "No. You can sign up and start using the free tier immediately — no credit card required. You only need to provide payment details when upgrading to Starter or Pro.",
   },
   {
     question: "Can I cancel anytime?",
     answer:
-      "Yes. There are no long-term contracts or cancellation fees. If you decide to cancel your Pro subscription, you can do so at any time from your account settings.",
+      "Yes. There are no long-term contracts or cancellation fees. If you decide to cancel your subscription, you can do so at any time from your account settings and you won't be charged again.",
+  },
+  {
+    question: "What's the difference between Starter and Pro?",
+    answer:
+      "Starter is built for freelancers and solopreneurs with moderate legal needs — 10 documents and 10 reviews per month covers most people. Pro is for founders and power users who need unlimited everything, contract comparison, and no watermark on downloads.",
   },
   {
     question: "Is Clausly a substitute for legal advice?",
@@ -78,7 +97,7 @@ export default function PricingPage() {
   const handleUpgradeClick = () => {
     toast({
       title: "Payment processing coming soon",
-      description: "We'll notify you when Pro launches.",
+      description: "We'll notify you when paid plans launch.",
     });
   };
 
@@ -108,30 +127,29 @@ export default function PricingPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-20">
+      <main className="max-w-6xl mx-auto px-6 py-20">
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-serif font-bold text-white mb-4">
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-muted-foreground max-w-xl mx-auto">
-            Start free. Upgrade when you're ready for unlimited power.
+            Start free. Upgrade when your legal needs grow.
           </p>
         </div>
 
         {/* Pricing cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-20">
+        <div className="grid md:grid-cols-4 gap-6 mb-20">
+
           {/* Free tier */}
           <Card className="bg-card border-border relative">
             <CardHeader className="pb-4">
               <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">Free</p>
               <div className="flex items-end gap-1 mb-4">
-                <span className="text-5xl font-bold text-white">$0</span>
-                <span className="text-muted-foreground mb-1">/month</span>
+                <span className="text-4xl font-bold text-white">$0</span>
+                <span className="text-muted-foreground mb-1 text-sm">/month</span>
               </div>
-              <CardTitle className="text-base font-normal text-muted-foreground">
-                Everything you need to get started
-              </CardTitle>
+              <p className="text-sm text-muted-foreground">Try Clausly with no commitment</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <ul className="space-y-3">
@@ -150,22 +168,49 @@ export default function PricingPage() {
             </CardContent>
           </Card>
 
+          {/* Starter tier */}
+          <Card className="bg-card border-border relative">
+            <CardHeader className="pb-4">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">Starter</p>
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-4xl font-bold text-white">$19</span>
+                <span className="text-muted-foreground mb-1 text-sm">/month</span>
+              </div>
+              <p className="text-sm text-muted-foreground">For freelancers & solopreneurs</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <ul className="space-y-3">
+                {STARTER_FEATURES.map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                onClick={handleUpgradeClick}
+                variant="outline"
+                className="w-full border-border text-white hover:bg-secondary"
+              >
+                Get Starter
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Pro tier */}
           <Card className="bg-card border-primary/40 relative ring-1 ring-primary/40">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <Badge className="bg-primary text-primary-foreground font-semibold px-4 py-1">
-                Recommended
+                Most Popular
               </Badge>
             </div>
             <CardHeader className="pb-4">
               <p className="text-sm font-medium text-primary uppercase tracking-wider mb-2">Pro</p>
               <div className="flex items-end gap-1 mb-4">
-                <span className="text-5xl font-bold text-white">$49</span>
-                <span className="text-muted-foreground mb-1">/month</span>
+                <span className="text-4xl font-bold text-white">$49</span>
+                <span className="text-muted-foreground mb-1 text-sm">/month</span>
               </div>
-              <CardTitle className="text-base font-normal text-muted-foreground">
-                Unlimited everything, all features included
-              </CardTitle>
+              <p className="text-sm text-muted-foreground">For founders & power users</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <ul className="space-y-3">
@@ -181,6 +226,50 @@ export default function PricingPage() {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
               >
                 Upgrade to Pro
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Teams tier — Coming Soon */}
+          <Card className="bg-card border-border relative opacity-75">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <Badge className="bg-secondary text-muted-foreground font-semibold px-4 py-1">
+                Coming Soon
+              </Badge>
+            </div>
+            <CardHeader className="pb-4">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">Teams</p>
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-4xl font-bold text-white">$119</span>
+                <span className="text-muted-foreground mb-1 text-sm">/month</span>
+              </div>
+              <p className="text-sm text-muted-foreground">For agencies & growing businesses</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <ul className="space-y-3">
+                {[
+                  "3 team seats included",
+                  "Unlimited everything",
+                  "Shared team workspace",
+                  "Shared template library",
+                  "White-label branding",
+                  "Audit logs & activity tracking",
+                  "Priority support (12hr SLA)",
+                  "$25/seat for additional members",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-3">
+                    <Check className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-muted-foreground">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                disabled
+                variant="outline"
+                className="w-full border-border text-muted-foreground cursor-not-allowed"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Notify Me
               </Button>
             </CardContent>
           </Card>
