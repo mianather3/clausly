@@ -4,9 +4,6 @@ import { useAuth } from "@clerk/react";
 import { GitCompare, Loader2, Trash2, Clock, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +13,9 @@ import {
   useDeleteComparison,
   getListComparisonsQueryKey,
 } from "@workspace/api-client-react";
+
+const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
+const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
 
 interface Difference {
   topic: string;
@@ -69,8 +69,6 @@ export default function ComparisonPage() {
     },
   });
 
-  const deleteMutation = useDeleteComparison();
-
   const handleCompare = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.contractAText.trim() || !form.contractBText.trim()) {
@@ -85,17 +83,12 @@ export default function ComparisonPage() {
     setDeletingId(id);
     try {
       const token = await getToken();
-      await fetch(`/api/comparisons/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await fetch(`/api/comparisons/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       queryClient.invalidateQueries({ queryKey: getListComparisonsQueryKey() });
       toast({ title: "Comparison deleted." });
     } catch {
       toast({ title: "Failed to delete.", variant: "destructive" });
-    } finally {
-      setDeletingId(null);
-    }
+    } finally { setDeletingId(null); }
   };
 
   const loadComparison = (comp: NonNullable<typeof comparisons>[number]) => {
@@ -117,38 +110,38 @@ export default function ComparisonPage() {
         {/* Input form */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="bg-card border-border">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle className="text-white text-base font-semibold">Compare Contracts</CardTitle>
               <CardDescription className="text-muted-foreground">Paste both contracts below and click Compare.</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCompare} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-white text-sm font-medium">Comparison Title *</Label>
-                  <Input
+              <form onSubmit={handleCompare} className="space-y-5">
+                <div>
+                  <label className={labelClass}>Comparison Title *</label>
+                  <input
+                    className={fieldClass}
                     placeholder="e.g., Vendor Agreement v1 vs v2"
                     value={form.title}
                     onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                    className="bg-background border-border text-white placeholder:text-muted-foreground"
                   />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-white text-sm font-medium">Contract A *</Label>
-                    <Textarea
+                  <div>
+                    <label className={labelClass}>Contract A *</label>
+                    <textarea
+                      className={`${fieldClass} min-h-[280px] resize-y font-mono text-xs`}
                       placeholder="Paste the first contract here..."
                       value={form.contractAText}
                       onChange={(e) => setForm((p) => ({ ...p, contractAText: e.target.value }))}
-                      className="bg-background border-border text-white placeholder:text-muted-foreground min-h-[280px] font-mono text-xs"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-white text-sm font-medium">Contract B *</Label>
-                    <Textarea
+                  <div>
+                    <label className={labelClass}>Contract B *</label>
+                    <textarea
+                      className={`${fieldClass} min-h-[280px] resize-y font-mono text-xs`}
                       placeholder="Paste the second contract here..."
                       value={form.contractBText}
                       onChange={(e) => setForm((p) => ({ ...p, contractBText: e.target.value }))}
-                      className="bg-background border-border text-white placeholder:text-muted-foreground min-h-[280px] font-mono text-xs"
                     />
                   </div>
                 </div>
@@ -170,7 +163,6 @@ export default function ComparisonPage() {
           {/* Results */}
           {result && (
             <div className="space-y-4">
-              {/* Assessment */}
               <Card className="bg-card border-primary/30">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-white text-base font-semibold flex items-center gap-2">
@@ -194,24 +186,23 @@ export default function ComparisonPage() {
                 </CardContent>
               </Card>
 
-              {/* Key differences */}
               {result.differences.length > 0 && (
                 <Card className="bg-card border-border">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-white text-base font-semibold">Key Differences</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="divide-y divide-border">
+                    <div className="divide-y divide-white/8">
                       {result.differences.map((diff, i) => (
                         <div key={i} className="py-4 first:pt-0 last:pb-0">
                           <p className="text-sm font-semibold text-primary mb-3">{diff.topic}</p>
                           <div className="grid md:grid-cols-2 gap-3">
-                            <div className="bg-background rounded-sm p-3">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">Contract A</p>
+                            <div className="rounded-lg bg-black/20 p-3">
+                              <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-1">Contract A</p>
                               <p className="text-sm text-white leading-relaxed">{diff.contractA}</p>
                             </div>
-                            <div className="bg-background rounded-sm p-3">
-                              <p className="text-xs text-muted-foreground font-medium mb-1">Contract B</p>
+                            <div className="rounded-lg bg-black/20 p-3">
+                              <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-1">Contract B</p>
                               <p className="text-sm text-white leading-relaxed">{diff.contractB}</p>
                             </div>
                           </div>
@@ -222,7 +213,6 @@ export default function ComparisonPage() {
                 </Card>
               )}
 
-              {/* Missing clauses */}
               {result.missingClauses.length > 0 && (
                 <Card className="bg-card border-border">
                   <CardHeader className="pb-3">
@@ -231,7 +221,7 @@ export default function ComparisonPage() {
                   <CardContent>
                     <div className="space-y-2">
                       {result.missingClauses.map((mc, i) => (
-                        <div key={i} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                        <div key={i} className="flex items-start gap-3 py-2 border-b border-white/8 last:border-0">
                           <Badge
                             variant="outline"
                             className={`flex-shrink-0 text-xs ${mc.presentIn === "A" ? "border-blue-500/40 text-blue-400" : "border-orange-500/40 text-orange-400"}`}
@@ -262,7 +252,7 @@ export default function ComparisonPage() {
                 [...comparisons].reverse().map((comp) => (
                   <div
                     key={comp.id}
-                    className="group flex items-start justify-between gap-2 p-2 rounded-sm hover:bg-secondary/50 transition-colors cursor-pointer"
+                    className="group flex items-start justify-between gap-2 p-2 rounded-lg hover:bg-black/20 transition-colors cursor-pointer"
                     onClick={() => loadComparison(comp)}
                   >
                     <div className="min-w-0 flex-1">
