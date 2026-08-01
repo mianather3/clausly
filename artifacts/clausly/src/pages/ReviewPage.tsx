@@ -2,15 +2,14 @@ import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateReview, getListReviewsQueryKey } from "@workspace/api-client-react";
 import { FileSearch, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp, Upload, X, FileText } from "lucide-react";
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+
+const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
+const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
 
 interface RiskyClause {
   clause: string;
@@ -22,30 +21,26 @@ function RiskScore({ score }: { score: number }) {
   const color = score <= 3 ? "text-green-400" : score <= 6 ? "text-yellow-400" : "text-red-400";
   const bgColor = score <= 3 ? "bg-green-400/10 border-green-400/20" : score <= 6 ? "bg-yellow-400/10 border-yellow-400/20" : "bg-red-400/10 border-red-400/20";
   const label = score <= 3 ? "Low Risk" : score <= 6 ? "Moderate Risk" : "High Risk";
-
   return (
-    <div className={`flex flex-col items-center justify-center p-8 rounded-sm border ${bgColor}`}>
+    <div className={`flex flex-col items-center justify-center p-8 rounded-lg border ${bgColor}`}>
       <div className={`font-bold font-serif leading-none ${color}`} style={{ fontSize: "4rem" }}>{score}</div>
       <div className="text-muted-foreground text-sm mt-2">out of 10</div>
-      <div className={`text-lg font-bold mt-3 tracking-wide uppercase text-sm ${color}`}>{label}</div>
+      <div className={`font-bold mt-3 tracking-wide uppercase text-sm ${color}`}>{label}</div>
     </div>
   );
 }
 
 function ClauseCard({ clause }: { clause: RiskyClause }) {
   const [expanded, setExpanded] = useState(false);
-
   return (
-    <div className="border border-border rounded-sm bg-background overflow-hidden">
+    <div className="rounded-lg bg-black/20 overflow-hidden">
       <button
-        className="w-full flex items-start justify-between p-4 text-left hover:bg-secondary/30 transition-colors"
+        className="w-full flex items-start justify-between p-4 text-left hover:bg-black/30 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <p className="text-sm text-white font-medium line-clamp-2">{clause.clause}</p>
-          </div>
+          <p className="text-sm text-white font-medium line-clamp-2">{clause.clause}</p>
         </div>
         {expanded ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
@@ -54,7 +49,7 @@ function ClauseCard({ clause }: { clause: RiskyClause }) {
         )}
       </button>
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-white/8 pt-3">
           <div>
             <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-1">Risk</p>
             <p className="text-sm text-muted-foreground">{clause.risk}</p>
@@ -71,20 +66,13 @@ function ClauseCard({ clause }: { clause: RiskyClause }) {
 
 async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).href;
-
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).href;
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item: any) => ("str" in item ? item.str : ""))
-      .join(" ");
-    pages.push(pageText);
+    pages.push(content.items.map((item: any) => ("str" in item ? item.str : "")).join(" "));
   }
   return pages.join("\n\n");
 }
@@ -130,29 +118,15 @@ export default function ReviewPage() {
 
   const processFile = async (file: File) => {
     const isPdf = file.type === "application/pdf" || file.name.endsWith(".pdf");
-    const isDocx =
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      file.name.endsWith(".docx");
-
-    if (!isPdf && !isDocx) {
-      toast({ title: "Only PDF and DOCX files are supported.", variant: "destructive" });
-      return;
-    }
-
+    const isDocx = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.endsWith(".docx");
+    if (!isPdf && !isDocx) { toast({ title: "Only PDF and DOCX files are supported.", variant: "destructive" }); return; }
     setUploadedFile(file);
     setIsExtracting(true);
     setContractText("");
-
-    if (!title) {
-      setTitle(file.name.replace(/\.(pdf|docx)$/i, ""));
-    }
-
+    if (!title) setTitle(file.name.replace(/\.(pdf|docx)$/i, ""));
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const text = isPdf
-        ? await extractTextFromPdf(arrayBuffer)
-        : await extractTextFromDocx(arrayBuffer);
-
+      const text = isPdf ? await extractTextFromPdf(arrayBuffer) : await extractTextFromDocx(arrayBuffer);
       if (!text.trim()) {
         toast({ title: "Could not extract text from this file. Try pasting the text manually.", variant: "destructive" });
         setUploadedFile(null);
@@ -163,9 +137,7 @@ export default function ReviewPage() {
     } catch {
       toast({ title: "Failed to read file. Please try again or paste text manually.", variant: "destructive" });
       setUploadedFile(null);
-    } finally {
-      setIsExtracting(false);
-    }
+    } finally { setIsExtracting(false); }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,24 +153,9 @@ export default function ReviewPage() {
     if (file) processFile(file);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => setIsDragging(false);
-
-  const clearFile = () => {
-    setUploadedFile(null);
-    setContractText("");
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !contractText) {
-      toast({ title: "Please provide a title and contract text.", variant: "destructive" });
-      return;
-    }
+    if (!title || !contractText) { toast({ title: "Please provide a title and contract text.", variant: "destructive" }); return; }
     setResult(null);
     mutation.mutate({ data: { title, contractText } });
   };
@@ -210,7 +167,7 @@ export default function ReviewPage() {
         <p className="text-muted-foreground mt-1">Upload a PDF or DOCX file, or paste your contract text, and get instant AI-powered risk analysis.</p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-sm border border-amber-500/30 bg-amber-500/8 px-4 py-3">
+      <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-4 py-3">
         <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-200/80 leading-relaxed">
           <span className="font-semibold text-amber-300">Legal Disclaimer: </span>
@@ -220,27 +177,29 @@ export default function ReviewPage() {
 
       {!result ? (
         <Card className="bg-card border-border">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-white text-base font-semibold">Contract Analysis</CardTitle>
             <CardDescription className="text-muted-foreground">Upload a file or paste the full contract text below for a comprehensive review.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-white text-sm font-medium">Review Title *</Label>
-                <Input
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Title */}
+              <div>
+                <label className={labelClass}>Review Title *</label>
+                <input
+                  className={fieldClass}
                   placeholder="e.g., Vendor Services Agreement Q1 2025"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="bg-background border-border text-white placeholder:text-muted-foreground"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-white text-sm font-medium">Upload Contract File</Label>
-
+              {/* File upload */}
+              <div>
+                <label className={labelClass}>Upload Contract File</label>
                 {uploadedFile ? (
-                  <div className="flex items-center gap-3 p-3 rounded-sm border border-primary/40 bg-primary/5">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30">
                     <FileText className="h-5 w-5 text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-white font-medium truncate">{uploadedFile.name}</p>
@@ -249,57 +208,41 @@ export default function ReviewPage() {
                     {isExtracting ? (
                       <Loader2 className="h-4 w-4 text-primary animate-spin flex-shrink-0" />
                     ) : (
-                      <button
-                        type="button"
-                        onClick={clearFile}
-                        className="text-muted-foreground hover:text-white transition-colors flex-shrink-0"
-                      >
+                      <button type="button" onClick={() => { setUploadedFile(null); setContractText(""); }} className="text-muted-foreground hover:text-white transition-colors">
                         <X className="h-4 w-4" />
                       </button>
                     )}
                   </div>
                 ) : (
                   <div
-                    className={`relative border-2 border-dashed rounded-sm p-6 text-center transition-colors cursor-pointer ${
-                      isDragging
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50 hover:bg-secondary/20"
+                    className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                      isDragging ? "border-primary bg-primary/10" : "border-white/10 hover:border-primary/40 hover:bg-black/20"
                     }`}
                     onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-white font-medium">Drop a file here or click to browse</p>
                     <p className="text-xs text-muted-foreground mt-1">PDF and DOCX supported</p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
+                    <input ref={fileInputRef} type="file" accept=".pdf,.docx" className="hidden" onChange={handleFileChange} />
                   </div>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-white text-sm font-medium">Contract Text *</Label>
-                  {contractText && (
-                    <span className="text-xs text-muted-foreground">{contractText.length.toLocaleString()} characters</span>
-                  )}
+              {/* Contract text */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className={labelClass} style={{ marginBottom: 0 }}>Contract Text *</label>
+                  {contractText && <span className="text-xs text-muted-foreground">{contractText.length.toLocaleString()} characters</span>}
                 </div>
-                <Textarea
+                <textarea
+                  className={`${fieldClass} min-h-[300px] resize-y font-mono`}
                   placeholder={isExtracting ? "Extracting text from file..." : "Paste the full contract text here, or upload a file above to auto-populate..."}
                   value={contractText}
-                  onChange={(e) => {
-                    setContractText(e.target.value);
-                    if (uploadedFile && e.target.value !== contractText) setUploadedFile(null);
-                  }}
+                  onChange={(e) => { setContractText(e.target.value); if (uploadedFile) setUploadedFile(null); }}
                   disabled={isExtracting}
-                  className="bg-background border-border text-white placeholder:text-muted-foreground min-h-[300px] font-mono text-sm disabled:opacity-60"
                 />
               </div>
 
@@ -308,22 +251,9 @@ export default function ReviewPage() {
                 disabled={mutation.isPending || isExtracting}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-5 h-auto"
               >
-                {mutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing contract...
-                  </>
-                ) : isExtracting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Extracting file text...
-                  </>
-                ) : (
-                  <>
-                    <FileSearch className="mr-2 h-4 w-4" />
-                    Analyze Contract
-                  </>
-                )}
+                {mutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Analyzing contract...</>
+                  : isExtracting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Extracting file text...</>
+                  : <><FileSearch className="mr-2 h-4 w-4" />Analyze Contract</>}
               </Button>
             </form>
           </CardContent>
@@ -349,18 +279,11 @@ export default function ReviewPage() {
                 <CardContent>
                   <p className="text-muted-foreground text-sm leading-relaxed">{result.summary}</p>
                   <Separator className="bg-border my-4" />
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-400" />
-                      <span className="text-white font-medium">{result.riskyClauses.length}</span>
-                      <span className="text-muted-foreground">risky clauses found</span>
-                    </div>
-                    {result.riskyClauses.length === 0 && (
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-400" />
-                        <span className="text-muted-foreground">No significant risks detected</span>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-yellow-400" />
+                    <span className="text-white font-medium">{result.riskyClauses.length}</span>
+                    <span className="text-muted-foreground">risky clauses found</span>
+                    {result.riskyClauses.length === 0 && <CheckCircle className="h-4 w-4 text-green-400 ml-2" />}
                   </div>
                 </CardContent>
               </Card>
