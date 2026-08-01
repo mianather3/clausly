@@ -5,10 +5,6 @@ import { useCreateDocument, getListDocumentsQueryKey, useListTemplates, useCreat
 import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle, BookMarked, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 const DOC_TYPES = [
@@ -17,6 +13,9 @@ const DOC_TYPES = [
   { value: "contractor_agreement", label: "Independent Contractor Agreement" },
   { value: "terms_of_service", label: "Terms of Service" },
 ];
+
+const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
+const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
 
 export default function GeneratePage() {
   const { toast } = useToast();
@@ -34,8 +33,6 @@ export default function GeneratePage() {
     additionalContext: "",
   });
   const [generatedDoc, setGeneratedDoc] = useState<{ id: number; content: string; title: string } | null>(null);
-
-  // Template state
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -137,12 +134,7 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: generatedDoc.title, content: generatedDoc.content }),
       });
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
-      }
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("wordprocessingml")) throw new Error(`Expected .docx but got ${contentType}`);
+      if (!response.ok) throw new Error(`Download failed (${response.status})`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -166,12 +158,7 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: generatedDoc.title, content: generatedDoc.content }),
       });
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Download failed (${response.status}): ${errText.slice(0, 200)}`);
-      }
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("pdf")) throw new Error(`Expected PDF but got ${contentType}`);
+      if (!response.ok) throw new Error(`Download failed (${response.status})`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -204,13 +191,13 @@ export default function GeneratePage() {
               </button>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-white text-sm font-medium">Template Name *</Label>
-                <Input
+              <div>
+                <label className={labelClass}>Template Name *</label>
+                <input
+                  className={fieldClass}
                   placeholder="e.g., Standard Vendor NDA"
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
-                  className="bg-background border-border text-white placeholder:text-muted-foreground"
                   autoFocus
                   onKeyDown={(e) => e.key === "Enter" && templateName.trim() && handleSaveTemplate()}
                 />
@@ -238,7 +225,7 @@ export default function GeneratePage() {
         <p className="text-muted-foreground mt-1">Fill in the details below and let AI draft your document.</p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-sm border border-amber-500/30 bg-amber-500/8 px-4 py-3">
+      <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-4 py-3">
         <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-200/80 leading-relaxed">
           <span className="font-semibold text-amber-300">Legal Disclaimer: </span>
@@ -248,97 +235,98 @@ export default function GeneratePage() {
 
       {!generatedDoc ? (
         <Card className="bg-card border-border">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-white text-base font-semibold">Document Details</CardTitle>
             <CardDescription className="text-muted-foreground">Fields marked with * are required.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Load template row */}
+
+              {/* Load template */}
               {templates && templates.length > 0 && (
-                <div className="flex items-center gap-3 pb-4 border-b border-border">
+                <div className="flex items-center gap-3 pb-4 border-b border-white/8">
                   <BookMarked className="h-4 w-4 text-primary flex-shrink-0" />
                   <div className="flex-1">
-                    <Select onValueChange={loadTemplate}>
-                      <SelectTrigger className="bg-background border-border text-white h-9">
-                        <SelectValue placeholder="Load a saved template..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {templates.map((t) => (
-                          <SelectItem key={t.id} value={String(t.id)} className="text-white focus:bg-secondary focus:text-white">
-                            {t.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      className={fieldClass}
+                      defaultValue=""
+                      onChange={(e) => e.target.value && loadTemplate(e.target.value)}
+                    >
+                      <option value="" disabled>Load a saved template...</option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={String(t.id)}>{t.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label className="text-white text-sm font-medium">Document Type *</Label>
-                <Select value={form.documentType} onValueChange={(val) => setForm((p) => ({ ...p, documentType: val }))}>
-                  <SelectTrigger className="bg-background border-border text-white">
-                    <SelectValue placeholder="Select a document type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {DOC_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value} className="text-white focus:bg-secondary focus:text-white">
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Document Type */}
+              <div>
+                <label className={labelClass}>Document Type *</label>
+                <select
+                  className={fieldClass}
+                  value={form.documentType}
+                  onChange={(e) => setForm((p) => ({ ...p, documentType: e.target.value }))}
+                >
+                  <option value="" disabled>Select a document type</option>
+                  {DOC_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
               </div>
 
+              {/* Party A & B */}
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-white text-sm font-medium">Party A (Your Organization) *</Label>
-                  <Input
+                <div>
+                  <label className={labelClass}>Party A (Your Organization) *</label>
+                  <input
+                    className={fieldClass}
                     placeholder="e.g., Acme Corp, John Smith"
                     value={form.partyA}
                     onChange={(e) => setForm((p) => ({ ...p, partyA: e.target.value }))}
-                    className="bg-background border-border text-white placeholder:text-muted-foreground"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-white text-sm font-medium">Party B (Other Party)</Label>
-                  <Input
+                <div>
+                  <label className={labelClass}>Party B (Other Party)</label>
+                  <input
+                    className={fieldClass}
                     placeholder="e.g., Jane Doe, Vendor LLC"
                     value={form.partyB}
                     onChange={(e) => setForm((p) => ({ ...p, partyB: e.target.value }))}
-                    className="bg-background border-border text-white placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-white text-sm font-medium">Key Terms & Requirements *</Label>
-                <Textarea
+              {/* Key Terms */}
+              <div>
+                <label className={labelClass}>Key Terms & Requirements *</label>
+                <textarea
+                  className={`${fieldClass} min-h-[100px] resize-y`}
                   placeholder="Describe the key terms, duration, scope, compensation, restrictions, or any specific clauses you need included..."
                   value={form.keyTerms}
                   onChange={(e) => setForm((p) => ({ ...p, keyTerms: e.target.value }))}
-                  className="bg-background border-border text-white placeholder:text-muted-foreground min-h-[100px]"
                 />
               </div>
 
+              {/* Jurisdiction & Additional Context */}
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-white text-sm font-medium">Jurisdiction</Label>
-                  <Input
+                <div>
+                  <label className={labelClass}>Jurisdiction</label>
+                  <input
+                    className={fieldClass}
                     placeholder="e.g., California, USA / England and Wales"
                     value={form.jurisdiction}
                     onChange={(e) => setForm((p) => ({ ...p, jurisdiction: e.target.value }))}
-                    className="bg-background border-border text-white placeholder:text-muted-foreground"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-white text-sm font-medium">Additional Context</Label>
-                  <Input
+                <div>
+                  <label className={labelClass}>Additional Context</label>
+                  <input
+                    className={fieldClass}
                     placeholder="Any other details the AI should know..."
                     value={form.additionalContext}
                     onChange={(e) => setForm((p) => ({ ...p, additionalContext: e.target.value }))}
-                    className="bg-background border-border text-white placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -384,31 +372,20 @@ export default function GeneratePage() {
                   {copied ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
-                <Button
-                  onClick={handleDownloadDocx}
-                  disabled={downloadingDocx}
-                  size="sm"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold"
-                >
+                <Button onClick={handleDownloadDocx} disabled={downloadingDocx} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold">
                   {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileType className="h-4 w-4" />}
                   {downloadingDocx ? "Generating..." : "Download Word (.docx)"}
                 </Button>
-                <Button
-                  onClick={handleDownloadPdf}
-                  disabled={downloadingPdf}
-                  variant="outline"
-                  size="sm"
-                  className="border-border text-white hover:bg-secondary gap-2"
-                >
+                <Button onClick={handleDownloadPdf} disabled={downloadingPdf} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
                   {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   {downloadingPdf ? "Generating..." : "Download PDF"}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="bg-background border border-border rounded-sm p-6 max-h-[60vh] overflow-y-auto">
-                <pre className="whitespace-pre-wrap font-serif text-sm text-white leading-relaxed">{generatedDoc.content}</pre>
-              </div>
+              <pre className="whitespace-pre-wrap font-serif text-sm text-white leading-relaxed max-h-[60vh] overflow-y-auto">
+                {generatedDoc.content}
+              </pre>
             </CardContent>
           </Card>
           <div className="flex gap-3">
@@ -419,11 +396,7 @@ export default function GeneratePage() {
             >
               Generate Another Document
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setShowSaveModal(true)}
-              className="text-muted-foreground hover:text-white gap-2"
-            >
+            <Button variant="ghost" onClick={() => setShowSaveModal(true)} className="text-muted-foreground hover:text-white gap-2">
               <BookMarked className="h-4 w-4" />
               Save as Template
             </Button>
