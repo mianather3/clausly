@@ -24,7 +24,7 @@ function RiskScore({ score }: { score: number }) {
   const bgColor = score <= 3 ? "bg-green-400/10 border-green-400/20" : score <= 6 ? "bg-yellow-400/10 border-yellow-400/20" : "bg-red-400/10 border-red-400/20";
   const label = score <= 3 ? "Low Risk" : score <= 6 ? "Moderate Risk" : "High Risk";
   return (
-    <div className={`flex flex-col items-center justify-center p-8 rounded-sm border ${bgColor}`}>
+    <div className={`flex flex-col items-center justify-center p-8 rounded-lg border ${bgColor}`}>
       <div className={`font-bold font-serif leading-none ${color}`} style={{ fontSize: "4rem" }}>{score}</div>
       <div className="text-muted-foreground text-sm mt-2">out of 10</div>
       <div className={`font-bold mt-3 tracking-wide uppercase text-sm ${color}`}>{label}</div>
@@ -35,9 +35,9 @@ function RiskScore({ score }: { score: number }) {
 function ClauseCard({ clause }: { clause: RiskyClause }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="border border-border rounded-sm bg-background overflow-hidden">
+    <div className="rounded-lg bg-black/20 overflow-hidden">
       <button
-        className="w-full flex items-start justify-between p-4 text-left hover:bg-secondary/30 transition-colors"
+        className="w-full flex items-start justify-between p-4 text-left hover:bg-black/30 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -51,7 +51,7 @@ function ClauseCard({ clause }: { clause: RiskyClause }) {
         )}
       </button>
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-white/8 pt-3">
           <div>
             <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-1">Risk</p>
             <p className="text-sm text-muted-foreground">{clause.risk}</p>
@@ -130,8 +130,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
         <h3 className="text-white font-semibold mb-2">Review not found</h3>
         <Link href="/reviews">
           <Button variant="outline" className="border-border text-white hover:bg-secondary">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Reviews
+            <ArrowLeft className="mr-2 h-4 w-4" />Back to Reviews
           </Button>
         </Link>
       </div>
@@ -143,36 +142,23 @@ export default function ReviewDetailPage({ id }: { id: string }) {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link href="/reviews">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Reviews
+            <ArrowLeft className="mr-2 h-4 w-4" />Reviews
           </Button>
         </Link>
-
         <div className="flex items-center gap-2">
           {shareToken ? (
             <>
-              <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-sm px-3 py-1.5 text-xs text-muted-foreground max-w-xs truncate">
+              <div className="flex items-center gap-2 bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-muted-foreground max-w-xs truncate">
                 <Link2 className="h-3 w-3 flex-shrink-0 text-primary" />
                 <span className="truncate">{`${window.location.origin}/shared-review/${shareToken}`}</span>
               </div>
-              <Button
-                onClick={handleCopyLink}
-                size="sm"
-                variant="outline"
-                className="border-border text-white hover:bg-secondary gap-2 flex-shrink-0"
-              >
+              <Button onClick={handleCopyLink} size="sm" variant="outline" className="border-border text-white hover:bg-secondary gap-2 flex-shrink-0">
                 {copiedLink ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                 {copiedLink ? "Copied!" : "Copy Link"}
               </Button>
             </>
           ) : (
-            <Button
-              onClick={handleShare}
-              disabled={sharing}
-              size="sm"
-              variant="outline"
-              className="border-border text-white hover:bg-secondary gap-2"
-            >
+            <Button onClick={handleShare} disabled={sharing} size="sm" variant="outline" className="border-border text-white hover:bg-secondary gap-2">
               {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
               {sharing ? "Generating..." : "Share Results"}
             </Button>
@@ -208,9 +194,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
                 <AlertTriangle className="h-4 w-4 text-yellow-400" />
                 <span className="text-white font-medium">{riskyClauses.length}</span>
                 <span className="text-muted-foreground">risky clauses identified</span>
-                {riskyClauses.length === 0 && (
-                  <CheckCircle className="h-4 w-4 text-green-400 ml-2" />
-                )}
+                {riskyClauses.length === 0 && <CheckCircle className="h-4 w-4 text-green-400 ml-2" />}
               </div>
             </CardContent>
           </Card>
@@ -240,9 +224,9 @@ export default function ReviewDetailPage({ id }: { id: string }) {
           <CardTitle className="text-white text-sm font-semibold">Original Contract Text</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="bg-background border border-border rounded-sm p-4 max-h-64 overflow-y-auto">
-            <pre className="whitespace-pre-wrap font-mono text-xs text-muted-foreground leading-relaxed">{review.contractText}</pre>
-          </div>
+          <pre className="whitespace-pre-wrap font-mono text-xs text-muted-foreground leading-relaxed max-h-64 overflow-y-auto">
+            {review.contractText}
+          </pre>
         </CardContent>
       </Card>
     </div>
