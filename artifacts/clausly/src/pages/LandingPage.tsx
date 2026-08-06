@@ -304,6 +304,12 @@ export default function LandingPage() {
             <Scale className="h-5 w-5 text-primary" />
             <span className="font-serif font-bold text-white">Clausly</span>
           </div>
+          <div className="flex items-center gap-6 text-xs text-muted-foreground">
+            <Link href="/privacy"><span className="hover:text-white cursor-pointer">Privacy</span></Link>
+            <Link href="/terms"><span className="hover:text-white cursor-pointer">Terms</span></Link>
+            <Link href="/refund"><span className="hover:text-white cursor-pointer">Refunds</span></Link>
+            <Link href="/contact"><span className="hover:text-white cursor-pointer">Contact</span></Link>
+          </div>
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Clausly. For informational purposes only.</p>
         </div>
       </footer>

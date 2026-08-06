@@ -21,6 +21,10 @@ import SignPage from "./pages/SignPage";
 import SharedReviewPage from "./pages/SharedReviewPage";
 import ComparisonPage from "./pages/ComparisonPage";
 import PricingPage from "./pages/PricingPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
+import RefundPage from "./pages/RefundPage";
+import ContactPage from "./pages/ContactPage";
 import { AppLayout } from "./components/AppLayout";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -148,6 +152,10 @@ function ClerkProviderWithRoutes() {
 
             {/* Public routes — no auth required */}
             <Route path="/pricing" component={PricingPage} />
+            <Route path="/privacy" component={PrivacyPage} />
+            <Route path="/terms" component={TermsPage} />
+            <Route path="/refund" component={RefundPage} />
+            <Route path="/contact" component={ContactPage} />
 
             <Route component={NotFound} />
           </Switch>
