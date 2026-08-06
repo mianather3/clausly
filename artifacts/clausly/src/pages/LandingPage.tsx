@@ -210,29 +210,24 @@ export default function LandingPage() {
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
           Generate attorney-quality NDAs, contractor agreements, privacy policies, and terms of service in 60 seconds — and review any contract for risky clauses with an AI-powered risk score.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className="flex flex-col items-center gap-4">
           <Link href="/sign-up">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 py-6 h-auto">
-              Get Started Free
+              Start Generating Free — No Card Required
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-primary/40 text-primary hover:bg-primary/10 text-base px-8 py-6 h-auto font-semibold"
+          <button
             onClick={() => setShowDemo(true)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            <Play className="mr-2 h-5 w-5" />
-            Try Demo
-          </Button>
-          <Link href="/sign-in">
-            <Button size="lg" variant="ghost" className="text-muted-foreground hover:text-white text-base px-6 py-6 h-auto">
-              Sign In
-            </Button>
-          </Link>
+            <Play className="h-3.5 w-3.5" />
+            Watch 60-Second Demo
+          </button>
         </div>
-        <p className="mt-6 text-sm text-muted-foreground">No credit card required. Free to try.</p>
+        <p className="mt-6 text-sm text-muted-foreground">
+          Bank-level encryption · Documents never used for AI training · No attorney required
+        </p>
       </section>
 
       {/* Document types strip */}
@@ -277,22 +272,20 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">Ready to protect your business?</h2>
           <p className="text-muted-foreground text-lg mb-8">Start generating documents and reviewing contracts today.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col items-center gap-4">
             <Link href="/sign-up">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-10 py-6 h-auto">
-                Get Started Free
+                Start Generating Free — No Card Required
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-primary/40 text-primary hover:bg-primary/10 text-base px-8 py-6 h-auto font-semibold"
+            <button
               onClick={() => setShowDemo(true)}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              <Play className="mr-2 h-5 w-5" />
-              Try Demo
-            </Button>
+              <Play className="h-3.5 w-3.5" />
+              Watch 60-Second Demo
+            </button>
           </div>
         </div>
       </section>
