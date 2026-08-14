@@ -27,7 +27,7 @@ const US_JURISDICTIONS = [
   "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island",
   "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
   "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
-].map((state) => `${state}, USA`);
+];
 
 const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
 const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
@@ -83,7 +83,7 @@ export default function GeneratePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.documentType || !form.partyA || !form.keyTerms) {
+    if (!form.documentType || !form.partyA || !form.keyTerms || !form.jurisdiction) {
       toast({ title: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
@@ -94,7 +94,7 @@ export default function GeneratePage() {
         partyA: form.partyA,
         partyB: form.partyB || undefined,
         keyTerms: form.keyTerms,
-        jurisdiction: form.jurisdiction || undefined,
+        jurisdiction: form.jurisdiction,
         additionalContext: form.additionalContext || undefined,
       },
     });
@@ -327,13 +327,13 @@ export default function GeneratePage() {
               {/* Jurisdiction & Additional Context */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Jurisdiction</label>
+                  <label className={labelClass}>Jurisdiction *</label>
                   <select
                     className={fieldClass}
                     value={form.jurisdiction}
                     onChange={(e) => setForm((p) => ({ ...p, jurisdiction: e.target.value }))}
                   >
-                    <option value="">Select a state (optional)</option>
+                    <option value="" disabled>Select a state</option>
                     {US_JURISDICTIONS.map((j) => (
                       <option key={j} value={j}>{j}</option>
                     ))}
