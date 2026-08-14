@@ -52,6 +52,7 @@ export default function GeneratePage() {
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   const { data: templates } = useListTemplates();
 
@@ -95,10 +96,16 @@ export default function GeneratePage() {
     },
   });
 
-  const handleDeleteTemplate = (id: number, name: string) => {
-    if (!window.confirm(`Delete template "${name}"? This can't be undone.`)) return;
-    setDeletingId(id);
-    deleteTemplateMutation.mutate({ id });
+  const handleDeleteTemplate = () => {
+    if (!selectedTemplateId) return;
+    const t = templates?.find((t) => t.id === parseInt(selectedTemplateId, 10));
+    if (!t) return;
+    if (!window.confirm(`Delete template "${t.name}"? This can't be undone.`)) return;
+    setDeletingId(t.id);
+    deleteTemplateMutation.mutate(
+      { id: t.id },
+      { onSuccess: () => setSelectedTemplateId("") }
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -279,37 +286,36 @@ export default function GeneratePage() {
 
               {/* Load / delete templates */}
               {templates && templates.length > 0 && (
-                <div className="space-y-2 pb-4 border-b border-white/8">
-                  <div className="flex items-center gap-2">
-                    <BookMarked className="h-4 w-4 text-primary flex-shrink-0" />
-                    <p className={labelClass + " mb-0"}>Saved Templates</p>
+                <div className="flex items-center gap-3 pb-4 border-b border-white/8">
+                  <BookMarked className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="flex-1">
+                    <select
+                      className={fieldClass}
+                      value={selectedTemplateId}
+                      onChange={(e) => {
+                        setSelectedTemplateId(e.target.value);
+                        if (e.target.value) loadTemplate(e.target.value);
+                      }}
+                    >
+                      <option value="" disabled>Load a saved template...</option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={String(t.id)}>{t.name}</option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="space-y-1.5">
-                    {templates.map((t) => (
-                      <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg bg-black/20 px-3 py-2">
-                        <button
-                          type="button"
-                          onClick={() => loadTemplate(String(t.id))}
-                          className="text-sm text-white text-left flex-1 min-w-0 truncate hover:text-primary transition-colors"
-                        >
-                          {t.name}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteTemplate(t.id, t.name)}
-                          disabled={deletingId === t.id}
-                          className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0 p-1"
-                          aria-label={`Delete template ${t.name}`}
-                        >
-                          {deletingId === t.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDeleteTemplate}
+                    disabled={!selectedTemplateId || deletingId !== null}
+                    className="text-muted-foreground hover:text-red-400 disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors flex-shrink-0 p-2"
+                    aria-label="Delete selected template"
+                  >
+                    {deletingId !== null ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               )}
 
