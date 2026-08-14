@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Scale, FileText, FileSearch, Shield, CheckCircle, ArrowRight, Zap, Lock, Globe, AlertTriangle, Play, X } from "lucide-react";
+import { Scale, FileText, FileSearch, Shield, CheckCircle, ArrowRight, Zap, Lock, Globe, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -221,8 +221,8 @@ export default function LandingPage() {
             onClick={() => setShowDemo(true)}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            <Play className="h-3.5 w-3.5" />
-            Watch 60-Second Demo
+            <FileText className="h-3.5 w-3.5" />
+            View a Sample NDA
           </button>
         </div>
         <p className="mt-6 text-sm text-muted-foreground">
@@ -283,8 +283,8 @@ export default function LandingPage() {
               onClick={() => setShowDemo(true)}
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              <Play className="h-3.5 w-3.5" />
-              Watch 60-Second Demo
+              <FileText className="h-3.5 w-3.5" />
+              View a Sample NDA
             </button>
           </div>
         </div>
