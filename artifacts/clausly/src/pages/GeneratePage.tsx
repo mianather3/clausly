@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
-import { useCreateDocument, getListDocumentsQueryKey, useListTemplates, useCreateTemplate, getListTemplatesQueryKey } from "@workspace/api-client-react";
-import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle, BookMarked, X } from "lucide-react";
+import { useCreateDocument, getListDocumentsQueryKey, useListTemplates, useCreateTemplate, useDeleteTemplate, getListTemplatesQueryKey } from "@workspace/api-client-react";
+import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle, BookMarked, X, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +51,7 @@ export default function GeneratePage() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data: templates } = useListTemplates();
 
@@ -80,6 +81,25 @@ export default function GeneratePage() {
       },
     },
   });
+
+  const deleteTemplateMutation = useDeleteTemplate({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTemplatesQueryKey() });
+        toast({ title: "Template deleted." });
+      },
+      onError: () => {
+        toast({ title: "Failed to delete template.", variant: "destructive" });
+      },
+      onSettled: () => setDeletingId(null),
+    },
+  });
+
+  const handleDeleteTemplate = (id: number, name: string) => {
+    if (!window.confirm(`Delete template "${name}"? This can't be undone.`)) return;
+    setDeletingId(id);
+    deleteTemplateMutation.mutate({ id });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,21 +277,38 @@ export default function GeneratePage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
 
-              {/* Load template */}
+              {/* Load / delete templates */}
               {templates && templates.length > 0 && (
-                <div className="flex items-center gap-3 pb-4 border-b border-white/8">
-                  <BookMarked className="h-4 w-4 text-primary flex-shrink-0" />
-                  <div className="flex-1">
-                    <select
-                      className={fieldClass}
-                      defaultValue=""
-                      onChange={(e) => e.target.value && loadTemplate(e.target.value)}
-                    >
-                      <option value="" disabled>Load a saved template...</option>
-                      {templates.map((t) => (
-                        <option key={t.id} value={String(t.id)}>{t.name}</option>
-                      ))}
-                    </select>
+                <div className="space-y-2 pb-4 border-b border-white/8">
+                  <div className="flex items-center gap-2">
+                    <BookMarked className="h-4 w-4 text-primary flex-shrink-0" />
+                    <p className={labelClass + " mb-0"}>Saved Templates</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    {templates.map((t) => (
+                      <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg bg-black/20 px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => loadTemplate(String(t.id))}
+                          className="text-sm text-white text-left flex-1 min-w-0 truncate hover:text-primary transition-colors"
+                        >
+                          {t.name}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTemplate(t.id, t.name)}
+                          disabled={deletingId === t.id}
+                          className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0 p-1"
+                          aria-label={`Delete template ${t.name}`}
+                        >
+                          {deletingId === t.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
