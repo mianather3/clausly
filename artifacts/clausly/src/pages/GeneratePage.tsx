@@ -14,6 +14,21 @@ const DOC_TYPES = [
   { value: "terms_of_service", label: "Terms of Service" },
 ];
 
+// US states + DC. Swap this for a country list (or nest states under a US
+// entry) when going international — the <select> markup below doesn't need
+// to change, just this array.
+const US_JURISDICTIONS = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+  "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia",
+  "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
+  "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+  "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota",
+  "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island",
+  "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
+  "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+].map((state) => `${state}, USA`);
+
 const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
 const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
 
@@ -313,12 +328,16 @@ export default function GeneratePage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Jurisdiction</label>
-                  <input
+                  <select
                     className={fieldClass}
-                    placeholder="e.g., California, USA / England and Wales"
                     value={form.jurisdiction}
                     onChange={(e) => setForm((p) => ({ ...p, jurisdiction: e.target.value }))}
-                  />
+                  >
+                    <option value="">Select a state (optional)</option>
+                    {US_JURISDICTIONS.map((j) => (
+                      <option key={j} value={j}>{j}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className={labelClass}>Additional Context</label>
