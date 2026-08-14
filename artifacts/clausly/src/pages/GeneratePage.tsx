@@ -294,7 +294,11 @@ export default function GeneratePage() {
                       value={selectedTemplateId}
                       onChange={(e) => {
                         setSelectedTemplateId(e.target.value);
-                        if (e.target.value) loadTemplate(e.target.value);
+                        if (e.target.value) {
+                          loadTemplate(e.target.value);
+                        } else {
+                          setForm({ documentType: "", partyA: "", partyB: "", keyTerms: "", jurisdiction: "", additionalContext: "" });
+                        }
                       }}
                     >
                       <option value="">Load a saved template...</option>
