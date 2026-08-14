@@ -352,7 +352,7 @@ export default function GeneratePage() {
 
               <Button
                 type="submit"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || !form.documentType || !form.partyA || !form.keyTerms || !form.jurisdiction}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-5 h-auto"
               >
                 {mutation.isPending ? (
