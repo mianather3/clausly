@@ -297,7 +297,7 @@ export default function GeneratePage() {
                         if (e.target.value) loadTemplate(e.target.value);
                       }}
                     >
-                      <option value="" disabled>Load a saved template...</option>
+                      <option value="">Load a saved template...</option>
                       {templates.map((t) => (
                         <option key={t.id} value={String(t.id)}>{t.name}</option>
                       ))}
