@@ -48,11 +48,11 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Documents</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stats?.totalDocuments ?? 0}</p>
+                    <p className="text-sm text-muted-foreground">Contract Reviews</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats?.totalReviews ?? 0}</p>
                   </div>
                   <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-primary" />
+                    <FileSearch className="h-5 w-5 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -62,11 +62,11 @@ export default function DashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Contract Reviews</p>
-                    <p className="text-3xl font-bold text-white mt-1">{stats?.totalReviews ?? 0}</p>
+                    <p className="text-sm text-muted-foreground">Total Documents</p>
+                    <p className="text-3xl font-bold text-white mt-1">{stats?.totalDocuments ?? 0}</p>
                   </div>
                   <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center">
-                    <FileSearch className="h-5 w-5 text-primary" />
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -109,22 +109,6 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Link href="/generate">
-          <Card className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer group">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-white">Generate a Document</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Create an NDA, Privacy Policy, Contractor Agreement, or Terms of Service.</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-4" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
         <Link href="/review">
           <Card className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer group">
             <CardContent className="pt-6">
@@ -135,6 +119,22 @@ export default function DashboardPage() {
                     <h3 className="font-semibold text-white">Review a Contract</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">Paste contract text and get AI risk analysis with flagged clauses.</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-4" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/generate">
+          <Card className="bg-card border-border hover:border-primary/40 transition-colors cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-white">Generate a Document</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Create an NDA, Privacy Policy, Contractor Agreement, or Terms of Service.</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 ml-4" />
               </div>
@@ -161,6 +161,47 @@ export default function DashboardPage() {
 
       {/* Recent activity */}
       <div className="grid lg:grid-cols-2 gap-6">
+        {/* Recent reviews */}
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <CardTitle className="text-white font-semibold text-base">Recent Reviews</CardTitle>
+            <Link href="/reviews">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white text-xs">View all</Button>
+            </Link>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {recentLoading ? (
+              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)
+            ) : recent?.reviews && recent.reviews.length > 0 ? (
+              recent.reviews.slice().reverse().slice(0, 5).map((review) => (
+                <Link key={review.id} href={`/reviews/${review.id}`}>
+                  <div className="flex items-center justify-between p-3 rounded-sm hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileSearch className="h-4 w-4 text-primary flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{review.title}</p>
+                        <RiskBadge score={review.riskScore} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0 ml-2">
+                      <Clock className="h-3 w-3" />
+                      <span>{formatDate(review.createdAt)}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="py-8 text-center">
+                <FileSearch className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                <Link href="/review">
+                  <Button variant="link" className="text-primary text-sm mt-1 p-0 h-auto">Review your first contract</Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Recent documents */}
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -200,47 +241,6 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">No documents yet.</p>
                 <Link href="/generate">
                   <Button variant="link" className="text-primary text-sm mt-1 p-0 h-auto">Generate your first document</Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent reviews */}
-        <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-white font-semibold text-base">Recent Reviews</CardTitle>
-            <Link href="/reviews">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white text-xs">View all</Button>
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {recentLoading ? (
-              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)
-            ) : recent?.reviews && recent.reviews.length > 0 ? (
-              recent.reviews.slice().reverse().slice(0, 5).map((review) => (
-                <Link key={review.id} href={`/reviews/${review.id}`}>
-                  <div className="flex items-center justify-between p-3 rounded-sm hover:bg-secondary/50 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <FileSearch className="h-4 w-4 text-primary flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{review.title}</p>
-                        <RiskBadge score={review.riskScore} />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0 ml-2">
-                      <Clock className="h-3 w-3" />
-                      <span>{formatDate(review.createdAt)}</span>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="py-8 text-center">
-                <FileSearch className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-                <p className="text-sm text-muted-foreground">No reviews yet.</p>
-                <Link href="/review">
-                  <Button variant="link" className="text-primary text-sm mt-1 p-0 h-auto">Review your first contract</Button>
                 </Link>
               </div>
             )}
