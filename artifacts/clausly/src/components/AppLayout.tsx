@@ -79,18 +79,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={location.startsWith("/documents")}>
-                      <Link href="/documents" className="flex items-center">
-                        <History className="mr-2 h-4 w-4" />
-                        <span>Documents</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={location.startsWith("/reviews")}>
                       <Link href="/reviews" className="flex items-center">
                         <History className="mr-2 h-4 w-4" />
                         <span>Reviews</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.startsWith("/documents")}>
+                      <Link href="/documents" className="flex items-center">
+                        <History className="mr-2 h-4 w-4" />
+                        <span>Documents</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
