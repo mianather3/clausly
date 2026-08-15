@@ -6,14 +6,14 @@ import { Badge } from "@/components/ui/badge";
 
 const FEATURES = [
   {
-    icon: FileText,
-    title: "AI Document Generation",
-    description: "Generate NDAs, Privacy Policies, Contractor Agreements, and Terms of Service in seconds — tailored to your specific parties and terms.",
-  },
-  {
     icon: FileSearch,
     title: "Contract Risk Analysis",
     description: "Paste any contract and get instant AI-powered analysis: flagged risky clauses, suggested replacements, and a 1-10 risk score.",
+  },
+  {
+    icon: FileText,
+    title: "AI Document Generation",
+    description: "Generate NDAs, Privacy Policies, Contractor Agreements, and Terms of Service in seconds — tailored to your specific parties and terms.",
   },
   {
     icon: Shield,
@@ -200,7 +200,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-6 py-24 text-center">
         <Badge variant="outline" className="mb-6 border-primary/40 text-primary bg-primary/10 px-4 py-1 text-sm font-medium">
-          AI-Powered Legal Documents
+          AI-Powered Contract Risk Review
         </Badge>
         <h1 className="text-5xl md:text-6xl font-serif font-bold text-white leading-tight mb-6 tracking-tight">
           Enterprise-grade legal docs,
@@ -208,12 +208,12 @@ export default function LandingPage() {
           <span className="text-primary">without the enterprise price.</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-          Generate thorough, professionally structured NDAs, contractor agreements, privacy policies, and terms of service in 60 seconds — and review any contract for risky clauses with an AI-powered risk score.
+          Paste a contract someone sent you — Clausly flags risky clauses and scores the risk in seconds. Need to draft your own NDA, contractor agreement, privacy policy, or terms of service instead? Generate one just as fast.
         </p>
         <div className="flex flex-col items-center gap-4">
           <Link href="/sign-up">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 py-6 h-auto">
-              Start Generating Free — No Card Required
+              Analyze a Contract Free — No Card Required
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
@@ -275,7 +275,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center gap-4">
             <Link href="/sign-up">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-10 py-6 h-auto">
-                Start Generating Free — No Card Required
+                Analyze a Contract Free — No Card Required
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
