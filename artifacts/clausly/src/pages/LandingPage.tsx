@@ -208,7 +208,7 @@ export default function LandingPage() {
           <span className="text-primary">without the enterprise price.</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-          Generate attorney-quality NDAs, contractor agreements, privacy policies, and terms of service in 60 seconds — and review any contract for risky clauses with an AI-powered risk score.
+          Generate thorough, professionally structured NDAs, contractor agreements, privacy policies, and terms of service in 60 seconds — and review any contract for risky clauses with an AI-powered risk score.
         </p>
         <div className="flex flex-col items-center gap-4">
           <Link href="/sign-up">
