@@ -46,18 +46,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={location === "/generate"}>
-                      <Link href="/generate" className="flex items-center">
-                        <FileText className="mr-2 h-4 w-4" />
-                        <span>Generate Document</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={location === "/review"}>
                       <Link href="/review" className="flex items-center">
                         <FileSearch className="mr-2 h-4 w-4" />
                         <span>Review Contract</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location === "/generate"}>
+                      <Link href="/generate" className="flex items-center">
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Generate Document</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
