@@ -34,6 +34,16 @@ function RiskScore({ score }: { score: number }) {
 
 function ClauseCard({ clause }: { clause: RiskyClause }) {
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const handleCopySuggestion = () => {
+    navigator.clipboard.writeText(clause.suggestion);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+    toast({ title: "Suggested clause copied to clipboard!" });
+  };
+
   return (
     <div className="rounded-lg bg-black/20 overflow-hidden">
       <button
@@ -57,7 +67,18 @@ function ClauseCard({ clause }: { clause: RiskyClause }) {
             <p className="text-sm text-muted-foreground">{clause.risk}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Suggested Replacement</p>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <p className="text-xs font-semibold text-green-400 uppercase tracking-wider">Suggested Replacement</p>
+              <Button
+                onClick={handleCopySuggestion}
+                size="sm"
+                variant="outline"
+                className="border-border text-white hover:bg-secondary gap-1.5 h-7 px-2 text-xs flex-shrink-0"
+              >
+                {copied ? <CheckCircle className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copied!" : "Copy"}
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground italic">{clause.suggestion}</p>
           </div>
         </div>
