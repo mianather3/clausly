@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useUplAcknowledgment } from "@/hooks/useUplAcknowledgment";
 
 interface RiskyClause {
   clause: string;
@@ -94,6 +95,7 @@ function formatDate(dateStr: string) {
 export default function ReviewDetailPage({ id }: { id: string }) {
   const { toast } = useToast();
   const { getToken } = useAuth();
+  const { requireAcknowledgment, AcknowledgmentModal } = useUplAcknowledgment();
   const reviewId = parseInt(id, 10);
   const { data: review, isLoading, error } = useGetReview(reviewId, {
     query: { enabled: !!reviewId && !isNaN(reviewId), queryKey: getGetReviewQueryKey(reviewId) },
@@ -160,6 +162,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
 
   return (
     <div className="max-w-4xl space-y-5">
+      {AcknowledgmentModal}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link href="/reviews">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
@@ -179,7 +182,7 @@ export default function ReviewDetailPage({ id }: { id: string }) {
               </Button>
             </>
           ) : (
-            <Button onClick={handleShare} disabled={sharing} size="sm" variant="outline" className="border-border text-white hover:bg-secondary gap-2">
+            <Button onClick={() => requireAcknowledgment(handleShare)} disabled={sharing} size="sm" variant="outline" className="border-border text-white hover:bg-secondary gap-2">
               {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
               {sharing ? "Generating..." : "Share Results"}
             </Button>

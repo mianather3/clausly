@@ -6,6 +6,7 @@ import { FileText, Copy, Download, CheckCircle, FileType, Loader2, AlertTriangle
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useUplAcknowledgment } from "@/hooks/useUplAcknowledgment";
 
 const DOC_TYPES = [
   { value: "nda", label: "Non-Disclosure Agreement (NDA)" },
@@ -36,6 +37,7 @@ export default function GeneratePage() {
   const { toast } = useToast();
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
+  const { requireAcknowledgment, AcknowledgmentModal } = useUplAcknowledgment();
   const [copied, setCopied] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -262,6 +264,8 @@ export default function GeneratePage() {
         </div>
       )}
 
+      {AcknowledgmentModal}
+
       <div>
         <h1 className="text-2xl font-serif font-bold text-white">Generate a Legal Document</h1>
         <p className="text-muted-foreground mt-1">Fill in the details below and let AI draft your document.</p>
@@ -434,15 +438,15 @@ export default function GeneratePage() {
                 <CardDescription className="text-muted-foreground mt-1">{generatedDoc.title}</CardDescription>
               </div>
               <div className="flex flex-wrap gap-2 flex-shrink-0">
-                <Button onClick={handleCopy} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
+                <Button onClick={() => requireAcknowledgment(handleCopy)} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
                   {copied ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
-                <Button onClick={handleDownloadDocx} disabled={downloadingDocx} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold">
+                <Button onClick={() => requireAcknowledgment(handleDownloadDocx)} disabled={downloadingDocx} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold">
                   {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileType className="h-4 w-4" />}
                   {downloadingDocx ? "Generating..." : "Download Word (.docx)"}
                 </Button>
-                <Button onClick={handleDownloadPdf} disabled={downloadingPdf} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
+                <Button onClick={() => requireAcknowledgment(handleDownloadPdf)} disabled={downloadingPdf} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
                   {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   {downloadingPdf ? "Generating..." : "Download PDF"}
                 </Button>

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useUplAcknowledgment } from "@/hooks/useUplAcknowledgment";
 
 const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
 const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
@@ -45,6 +46,7 @@ interface ClauseExplanation {
 export default function DocumentDetailPage({ id }: { id: string }) {
   const { toast } = useToast();
   const { getToken } = useAuth();
+  const { requireAcknowledgment, AcknowledgmentModal } = useUplAcknowledgment();
   const [copied, setCopied] = useState(false);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -319,6 +321,8 @@ export default function DocumentDetailPage({ id }: { id: string }) {
         </div>
       )}
 
+      {AcknowledgmentModal}
+
       <div className="flex items-center gap-3">
         <Link href="/documents">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
@@ -345,15 +349,15 @@ export default function DocumentDetailPage({ id }: { id: string }) {
             {sigBadge && <div className="mt-2">{sigBadge}</div>}
           </div>
           <div className="flex flex-wrap gap-2 flex-shrink-0">
-            <Button onClick={handleCopy} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
+            <Button onClick={() => requireAcknowledgment(handleCopy)} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
               {copied ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
               {copied ? "Copied" : "Copy"}
             </Button>
-            <Button onClick={handleDownloadDocx} disabled={downloadingDocx} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold">
+            <Button onClick={() => requireAcknowledgment(handleDownloadDocx)} disabled={downloadingDocx} size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-semibold">
               {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileType className="h-4 w-4" />}
               {downloadingDocx ? "Generating..." : "Download Word (.docx)"}
             </Button>
-            <Button onClick={handleDownloadPdf} disabled={downloadingPdf} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
+            <Button onClick={() => requireAcknowledgment(handleDownloadPdf)} disabled={downloadingPdf} variant="outline" size="sm" className="border-border text-white hover:bg-secondary gap-2">
               {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               {downloadingPdf ? "Generating..." : "Download PDF"}
             </Button>
