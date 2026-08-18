@@ -71,7 +71,7 @@ Required JSON format:
       "clause": "<exact verbatim quote of the problematic language from the contract>",
       "risk": "<plain English explanation of specifically what risk this creates, for which party, and what could happen if it stays as-is>",
       "impact": "<1-2 sentences in plain, jargon-free English explaining the real-world consequence to the person reading this contract — what could actually happen to them personally or to their business if they sign this clause as-is. Be specific and concrete, not abstract. Example: 'If you sign this, your employer could legally stop you from working in your industry anywhere in the country for 5 years, even if they fire you tomorrow.'>",
-      "suggestion": "<exact replacement language that a practicing attorney would use>"
+      "suggestion": "<balanced, market-standard replacement language that a practicing attorney would use — write language that is fair and reasonable enough that a counterparty would actually accept it in a real negotiation, not maximally one-sided in the reviewer's favor. The goal is a clause both parties can sign, not the most aggressive possible protection.>"
     }
   ],
   "summary": "<3-4 sentences in plain English explaining the overall risk, practical business implications, and top priorities for negotiation>"
