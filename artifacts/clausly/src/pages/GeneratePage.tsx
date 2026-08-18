@@ -335,7 +335,7 @@ export default function GeneratePage() {
                   value={form.documentType}
                   onChange={(e) => setForm((p) => ({ ...p, documentType: e.target.value }))}
                 >
-                  <option value="" disabled>Select a document type</option>
+                  <option value="">Select a document type</option>
                   {DOC_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
@@ -384,7 +384,7 @@ export default function GeneratePage() {
                     value={form.jurisdiction}
                     onChange={(e) => setForm((p) => ({ ...p, jurisdiction: e.target.value }))}
                   >
-                    <option value="" disabled>Select a state</option>
+                    <option value="">Select a state</option>
                     {US_JURISDICTIONS.map((j) => (
                       <option key={j} value={j}>{j}</option>
                     ))}
