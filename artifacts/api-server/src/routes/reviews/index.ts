@@ -10,6 +10,7 @@ const router: IRouter = Router();
 interface RiskyClause {
   clause: string;
   risk: string;
+  impact: string;
   suggestion: string;
 }
 
@@ -69,6 +70,7 @@ Required JSON format:
     {
       "clause": "<exact verbatim quote of the problematic language from the contract>",
       "risk": "<plain English explanation of specifically what risk this creates, for which party, and what could happen if it stays as-is>",
+      "impact": "<1-2 sentences in plain, jargon-free English explaining the real-world consequence to the person reading this contract — what could actually happen to them personally or to their business if they sign this clause as-is. Be specific and concrete, not abstract. Example: 'If you sign this, your employer could legally stop you from working in your industry anywhere in the country for 5 years, even if they fire you tomorrow.'>",
       "suggestion": "<exact replacement language that a practicing attorney would use>"
     }
   ],

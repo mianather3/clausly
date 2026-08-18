@@ -17,6 +17,7 @@ import { useUplAcknowledgment } from "@/hooks/useUplAcknowledgment";
 interface RiskyClause {
   clause: string;
   risk: string;
+  impact?: string;
   suggestion: string;
 }
 
@@ -67,6 +68,12 @@ function ClauseCard({ clause }: { clause: RiskyClause }) {
             <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-1">Risk</p>
             <p className="text-sm text-muted-foreground">{clause.risk}</p>
           </div>
+          {clause.impact && (
+            <div className="rounded-lg bg-primary/8 border border-primary/20 px-3 py-2.5">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">What This Means For You</p>
+              <p className="text-sm text-white leading-relaxed">{clause.impact}</p>
+            </div>
+          )}
           <div>
             <div className="flex items-center justify-between gap-2 mb-1">
               <p className="text-xs font-semibold text-green-400 uppercase tracking-wider">Suggested Replacement</p>
