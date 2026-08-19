@@ -167,13 +167,9 @@ export default function ReviewPage() {
         <p className="text-muted-foreground mt-1">Upload a PDF or DOCX file, or paste your contract text, and get instant AI-powered risk analysis.</p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/8 px-4 py-3">
-        <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-200/80 leading-relaxed">
-          <span className="font-semibold text-amber-300">Legal Disclaimer: </span>
-          Clausly generates documents for informational purposes only. Nothing on this platform constitutes legal advice or creates an attorney-client relationship. Always consult a licensed attorney before executing any legal document.
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        For informational purposes only — not legal advice. <a href="/terms" className="underline hover:text-white transition-colors">Learn more</a>
+      </p>
 
       {!result ? (
         <Card className="bg-card border-border">
