@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useGetDashboardStats, useGetRecentActivity } from "@workspace/api-client-react";
-import { FileText, FileSearch, TrendingUp, BookMarked, ArrowRight, Clock, GitCompare } from "lucide-react";
+import { FileText, FileSearch, TrendingUp, BookMarked, ArrowRight, Clock, GitCompare, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,6 +109,38 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {(stats?.highRiskCount ?? 0) > 0 && (
+              <Card className="bg-card border-red-400/20 border sm:col-span-2 lg:col-span-4">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-sm bg-red-400/10 flex items-center justify-center flex-shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-red-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold">
+                          {stats?.highRiskCount === 1
+                            ? "1 contract needs attention"
+                            : `${stats?.highRiskCount} contracts need attention`}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {stats?.mostCommonRisk
+                            ? `Most flagged issue: ${stats.mostCommonRisk}`
+                            : "Review flagged clauses before signing"}
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/reviews">
+                      <Button size="sm" variant="outline" className="border-red-400/30 text-red-400 hover:bg-red-400/10 flex-shrink-0">
+                        View High Risk Reviews
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>

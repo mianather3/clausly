@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, gte, and } from "drizzle-orm";
 import { db, documentsTable, reviewsTable, templatesTable } from "@workspace/db";
 import { GetDashboardStatsResponse, GetRecentActivityResponse } from "@workspace/api-zod/schemas";
 import { requireAuth } from "../../middlewares/requireAuth";
@@ -46,12 +46,61 @@ router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
     .from(templatesTable)
     .where(eq(templatesTable.userId, userId));
 
+  // High risk count (score >= 7)
+  const [highRiskResult] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(reviewsTable)
+    .where(and(eq(reviewsTable.userId, userId), gte(reviewsTable.riskScore, 7)));
+
+  const highRiskCount = highRiskResult?.count ?? 0;
+
+  // Most common risk — scan riskyClausesJson for keyword patterns
+  const allReviews = await db
+    .select({ riskyClausesJson: reviewsTable.riskyClausesJson })
+    .from(reviewsTable)
+    .where(eq(reviewsTable.userId, userId));
+
+  const riskKeywords: Record<string, number> = {
+    "Indemnification": 0,
+    "Non-Compete": 0,
+    "IP Assignment": 0,
+    "Termination": 0,
+    "Liability": 0,
+    "Arbitration": 0,
+    "Confidentiality": 0,
+    "Auto-Renewal": 0,
+  };
+
+  for (const review of allReviews) {
+    if (!review.riskyClausesJson) continue;
+    try {
+      const clauses = JSON.parse(review.riskyClausesJson) as Array<{ risk?: string; clause?: string }>;
+      for (const clause of clauses) {
+        const text = `${clause.risk ?? ""} ${clause.clause ?? ""}`.toLowerCase();
+        if (text.includes("indemnif")) riskKeywords["Indemnification"]++;
+        if (text.includes("non-compete") || text.includes("noncompete") || text.includes("competitor")) riskKeywords["Non-Compete"]++;
+        if (text.includes("intellectual property") || text.includes("ip assignment") || text.includes("ownership")) riskKeywords["IP Assignment"]++;
+        if (text.includes("terminat")) riskKeywords["Termination"]++;
+        if (text.includes("liabilit")) riskKeywords["Liability"]++;
+        if (text.includes("arbitrat")) riskKeywords["Arbitration"]++;
+        if (text.includes("confidential")) riskKeywords["Confidentiality"]++;
+        if (text.includes("auto-renew") || text.includes("automatic renewal")) riskKeywords["Auto-Renewal"]++;
+      }
+    } catch {}
+  }
+
+  const mostCommonRisk = Object.entries(riskKeywords)
+    .filter(([, count]) => count > 0)
+    .sort(([, a], [, b]) => b - a)[0]?.[0] ?? null;
+
   const stats = {
     totalDocuments: docCountResult?.count ?? 0,
     totalReviews: reviewCountResult?.count ?? 0,
     templateCount: templateCountResult?.count ?? 0,
     documentsByType,
     avgRiskScore,
+    highRiskCount,
+    mostCommonRisk,
   };
 
   res.json(GetDashboardStatsResponse.parse(stats));

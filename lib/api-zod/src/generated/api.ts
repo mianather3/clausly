@@ -259,6 +259,8 @@ export const GetDashboardStatsResponse = zod.object({
   templateCount: zod.number(),
   documentsByType: zod.record(zod.string(), zod.number()),
   avgRiskScore: zod.number().nullable(),
+  highRiskCount: zod.number(),
+  mostCommonRisk: zod.string().nullable(),
 });
 
 /**
