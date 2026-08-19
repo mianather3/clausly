@@ -232,6 +232,7 @@ export default function LandingPage() {
 
       {/* Product Demo */}
       <section className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="border-t border-border mb-16" />
         <div className="text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">See It In Action</p>
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mt-3">Here's what Clausly finds in seconds</h2>
