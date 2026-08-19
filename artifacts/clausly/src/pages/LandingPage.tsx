@@ -231,77 +231,76 @@ export default function LandingPage() {
       </section>
 
       {/* Product Demo */}
-      <section className="max-w-7xl mx-auto px-6 pb-16">
-        <div className="text-center mb-8">
+      <section className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">See It In Action</p>
-          <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mt-2">Here's what Clausly finds in seconds</h2>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mt-3">Here's what Clausly finds in seconds</h2>
         </div>
-        <div className="max-w-3xl mx-auto rounded-lg bg-card border border-border overflow-hidden shadow-2xl">
+        <div className="max-w-4xl mx-auto rounded-lg bg-card border border-border overflow-hidden shadow-2xl">
           {/* Mock header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="flex items-center justify-between px-8 py-6 border-b border-border">
             <div>
-              <p className="text-white font-semibold text-sm">Freelance Services Agreement — Acme Corp</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Analyzed just now · 17 clauses reviewed</p>
+              <p className="text-white font-serif font-bold text-xl">Freelance Services Agreement — Acme Corp</p>
+              <p className="text-sm text-muted-foreground mt-1">Analyzed just now · 17 clauses reviewed</p>
             </div>
-            <div className="flex items-center gap-2 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
-              <span className="text-red-400 font-bold font-serif text-2xl leading-none">7</span>
+            <div className="flex items-center gap-3 bg-red-400/10 border border-red-400/20 rounded-lg px-5 py-3 flex-shrink-0 ml-4">
+              <span className="text-red-400 font-bold font-serif leading-none" style={{ fontSize: "3rem" }}>7</span>
               <div>
-                <p className="text-xs text-red-400 font-bold uppercase tracking-wide leading-none">High Risk</p>
-                <p className="text-xs text-muted-foreground leading-none mt-0.5">out of 10</p>
+                <p className="text-sm text-red-400 font-bold uppercase tracking-wide leading-none">High Risk</p>
+                <p className="text-sm text-muted-foreground leading-none mt-1">out of 10</p>
               </div>
             </div>
           </div>
           {/* Mock summary */}
-          <div className="px-5 py-4 border-b border-border bg-black/10">
-            <p className="text-xs text-muted-foreground leading-relaxed">This contract contains several one-sided clauses that could expose you to significant liability. The non-compete clause is unusually broad, the IP assignment sweeps in pre-existing work, and termination terms offer you no protection. Address these before signing.</p>
+          <div className="px-8 py-5 border-b border-border bg-black/10">
+            <p className="text-sm text-muted-foreground leading-relaxed">This contract contains several one-sided clauses that could expose you to significant liability. The non-compete clause is unusually broad, the IP assignment sweeps in pre-existing work, and termination terms offer you no protection. Address these before signing.</p>
           </div>
           {/* Mock flagged clauses */}
-          <div className="px-5 py-4 space-y-3">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="h-4 w-4 text-yellow-400" />
-              <p className="text-sm font-semibold text-white">3 Flagged Clauses</p>
+          <div className="px-8 py-6 space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
+              <p className="text-base font-semibold text-white">3 Flagged Clauses</p>
+              <span className="bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 text-xs font-semibold px-2 py-0.5 rounded">3</span>
             </div>
             {/* Clause 1 — expanded */}
             <div className="rounded-lg bg-black/20 overflow-hidden">
-              <div className="flex items-start gap-3 p-4">
-                <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm text-white font-medium">"Contractor assigns all intellectual property created during or related to this engagement, including pre-existing tools and frameworks."</p>
-                  <div className="mt-3 space-y-2">
-                    <div>
-                      <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-1">Risk</p>
-                      <p className="text-xs text-muted-foreground">This clause gives the client ownership of tools and code you built before this project — including your reusable libraries and frameworks you use across all clients.</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">What This Means For You</p>
-                      <p className="text-xs text-white">If you sign this, the client could claim ownership of your entire code portfolio — not just work done for them.</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Suggested Replacement</p>
-                      <p className="text-xs text-muted-foreground italic">"Contractor assigns IP created specifically for this engagement. Pre-existing tools, frameworks, and background IP remain the sole property of Contractor."</p>
-                    </div>
+              <div className="flex items-start gap-4 p-5">
+                <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-4">
+                  <p className="text-sm text-white font-medium leading-relaxed">"Contractor assigns all intellectual property created during or related to this engagement, including pre-existing tools and frameworks."</p>
+                  <div>
+                    <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-1.5">Risk</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">This clause gives the client ownership of tools and code you built before this project — including your reusable libraries and frameworks you use across all clients.</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">What This Means For You</p>
+                    <p className="text-sm text-white leading-relaxed">If you sign this, the client could claim ownership of your entire code portfolio — not just work done for them.</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1.5">Suggested Replacement</p>
+                    <p className="text-sm text-muted-foreground italic leading-relaxed">"Contractor assigns IP created specifically for this engagement. Pre-existing tools, frameworks, and background IP remain the sole property of Contractor."</p>
                   </div>
                 </div>
               </div>
             </div>
             {/* Clause 2 — collapsed */}
-            <div className="rounded-lg bg-black/20 flex items-start gap-3 p-4">
-              <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-white font-medium">"Contractor may not work with any competitor of Client for a period of 3 years after termination."</p>
+            <div className="rounded-lg bg-black/20 flex items-start gap-4 p-5">
+              <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-white font-medium leading-relaxed">"Contractor may not work with any competitor of Client for a period of 3 years after termination."</p>
             </div>
             {/* Clause 3 — collapsed */}
-            <div className="rounded-lg bg-black/20 flex items-start gap-3 p-4">
-              <AlertTriangle className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-white font-medium">"Client may terminate this agreement immediately without notice or compensation for work in progress."</p>
+            <div className="rounded-lg bg-black/20 flex items-start gap-4 p-5">
+              <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-white font-medium leading-relaxed">"Client may terminate this agreement immediately without notice or compensation for work in progress."</p>
             </div>
           </div>
           {/* Mock footer */}
-          <div className="px-5 py-3 border-t border-border bg-black/10 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">17 clauses analyzed · 3 need attention · completed in 18 seconds</p>
+          <div className="px-8 py-4 border-t border-border bg-black/10 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">17 clauses analyzed · 3 need attention · completed in 18 seconds</p>
             <Link href="/sign-up">
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs">
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
                 Review Your Contract
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
