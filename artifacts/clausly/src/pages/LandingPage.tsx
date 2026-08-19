@@ -203,17 +203,17 @@ export default function LandingPage() {
           AI-Powered Contract Risk Review
         </Badge>
         <h1 className="text-5xl md:text-6xl font-serif font-bold text-white leading-tight mb-6 tracking-tight">
-          Enterprise-grade legal docs,
+          Know what you're agreeing to
           <br />
-          <span className="text-primary">without the enterprise price.</span>
+          <span className="text-primary">before you sign.</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-          Paste a contract someone sent you — Clausly flags risky clauses and scores the risk in seconds. Need to draft your own NDA, contractor agreement, privacy policy, or terms of service instead? Generate one just as fast.
+          Upload or paste a contract and Clausly instantly finds risky clauses, explains them in plain English, and shows you exactly what needs attention before you sign. Need to draft your own NDA, contractor agreement, privacy policy, or terms of service? Generate one just as fast.
         </p>
         <div className="flex flex-col items-center gap-4">
           <Link href="/sign-up">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 py-6 h-auto">
-              Analyze a Contract Free — No Card Required
+              Review My Contract Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
@@ -226,7 +226,7 @@ export default function LandingPage() {
           </button>
         </div>
         <p className="mt-6 text-sm text-muted-foreground">
-          Bank-level encryption · Documents never used for AI training · No attorney required
+          Documents never used for AI training · Encrypted in transit and at rest
         </p>
       </section>
 
@@ -252,7 +252,7 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-6 py-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4">Everything you need. Nothing you don't.</h2>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto">Two powerful tools that cover 90% of what a startup or freelancer needs from a lawyer.</p>
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">Three powerful tools that cover 90% of what a startup or freelancer needs from a lawyer.</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map((feature) => (
@@ -275,7 +275,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center gap-4">
             <Link href="/sign-up">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-10 py-6 h-auto">
-                Analyze a Contract Free — No Card Required
+                Review My Contract Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
