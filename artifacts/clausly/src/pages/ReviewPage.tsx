@@ -1,12 +1,14 @@
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
 import { useCreateReview, getListReviewsQueryKey } from "@workspace/api-client-react";
-import { FileSearch, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp, Upload, X, FileText } from "lucide-react";
+import { FileSearch, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp, Upload, X, FileText, Share2, Copy, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useUplAcknowledgment } from "@/hooks/useUplAcknowledgment";
 
 const fieldClass = "w-full rounded-lg bg-black/20 px-4 py-2.5 text-sm text-white placeholder:text-white/30 border-0 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-all duration-200";
 const labelClass = "block text-xs font-semibold uppercase tracking-wider text-white/60 mb-1.5";
@@ -98,6 +100,11 @@ export default function ReviewPage() {
     riskyClauses: RiskyClause[];
     summary: string;
   } | null>(null);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const { getToken } = useAuth();
+  const { requireAcknowledgment, AcknowledgmentModal } = useUplAcknowledgment();
 
   const mutation = useCreateReview({
     mutation: {
@@ -153,15 +160,44 @@ export default function ReviewPage() {
     if (file) processFile(file);
   };
 
+  const handleShare = async () => {
+    if (!result) return;
+    setSharing(true);
+    try {
+      const token = await getToken();
+      const r = await fetch(`/api/reviews/${result.id}/share`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error((await r.json()).error || "Failed");
+      const data = await r.json() as { token: string };
+      setShareToken(data.token);
+    } catch (err) {
+      toast({ title: "Failed to generate share link.", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+    } finally { setSharing(false); }
+  };
+
+  const handleCopyLink = () => {
+    if (!shareToken) return;
+    const url = `${window.location.origin}/shared-review/${shareToken}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+    toast({ title: "Link copied to clipboard!", description: "Anyone with this link can view the risk analysis." });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !contractText) { toast({ title: "Please provide a title and contract text.", variant: "destructive" }); return; }
     setResult(null);
+    setShareToken(null);
+    setCopiedLink(false);
     mutation.mutate({ data: { title, contractText } });
   };
 
   return (
     <div className="max-w-4xl space-y-6">
+      {AcknowledgmentModal}
       <div>
         <h1 className="text-2xl font-serif font-bold text-white">Review a Contract</h1>
         <p className="text-muted-foreground mt-1">Upload a PDF or DOCX file, or paste your contract text, and get instant AI-powered risk analysis.</p>
@@ -304,13 +340,34 @@ export default function ReviewPage() {
             </Card>
           )}
 
-          <Button
-            onClick={() => { setResult(null); setTitle(""); setContractText(""); setUploadedFile(null); }}
-            variant="outline"
-            className="border-border text-white hover:bg-secondary"
-          >
-            Analyze Another Contract
-          </Button>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <Button
+              onClick={() => { setResult(null); setTitle(""); setContractText(""); setUploadedFile(null); setShareToken(null); setCopiedLink(false); }}
+              variant="outline"
+              className="border-border text-white hover:bg-secondary"
+            >
+              Analyze Another Contract
+            </Button>
+            <div className="flex items-center gap-2">
+              {shareToken ? (
+                <>
+                  <div className="flex items-center gap-2 bg-black/20 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-muted-foreground max-w-xs truncate">
+                    <Link2 className="h-3 w-3 flex-shrink-0 text-primary" />
+                    <span className="truncate">{`${window.location.origin}/shared-review/${shareToken}`}</span>
+                  </div>
+                  <Button onClick={handleCopyLink} size="sm" variant="outline" className="border-border text-white hover:bg-secondary gap-2 flex-shrink-0">
+                    {copiedLink ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                    {copiedLink ? "Copied!" : "Copy Link"}
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => requireAcknowledgment(handleShare)} disabled={sharing} size="sm" variant="outline" className="border-border text-white hover:bg-secondary gap-2">
+                  {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                  {sharing ? "Generating..." : "Share Results"}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
