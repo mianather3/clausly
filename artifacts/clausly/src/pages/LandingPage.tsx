@@ -279,13 +279,6 @@ export default function LandingPage() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <button
-              onClick={() => setShowDemo(true)}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              View a Sample NDA
-            </button>
           </div>
         </div>
       </section>
