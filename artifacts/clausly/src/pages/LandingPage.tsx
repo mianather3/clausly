@@ -275,7 +275,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center gap-4">
             <Link href="/sign-up">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-10 py-6 h-auto">
-                Try It Free — No Card Required
+                Review a Contract Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
