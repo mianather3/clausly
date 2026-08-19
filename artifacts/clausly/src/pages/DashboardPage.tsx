@@ -77,9 +77,15 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Avg Risk Score</p>
-                    <p className="text-3xl font-bold text-white mt-1">
+                    <p className={`text-3xl font-bold mt-1 ${
+                      stats?.avgRiskScore == null ? "text-white" :
+                      stats.avgRiskScore <= 3 ? "text-green-400" :
+                      stats.avgRiskScore <= 6 ? "text-yellow-400" :
+                      "text-red-400"
+                    }`}>
                       {stats?.avgRiskScore != null ? `${stats.avgRiskScore}/10` : "—"}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">Higher = more risk</p>
                   </div>
                   <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center">
                     <TrendingUp className="h-5 w-5 text-primary" />
